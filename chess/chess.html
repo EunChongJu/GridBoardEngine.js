@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>GridBoardEngine.js - Chess Test</title>
+		<link href="./css/chess.css" rel="stylesheet">
+		<script src="../gbe.prototype.js"></script>
+		<script src="./gbe.chess.js"></script>
+		<script src="./chess.graph.js"></script>
+	</head>
+	<body>
+		<div class="red">
+			Checkmate!
+		</div>
+		<div class="board">
+			<div class="board-wrap" id="chessBoard">
+				<div class="board-row">
+					<div class="board-cell" id="c-11"><img src="image/Bb.png"></div>
+					<div class="board-cell" id="c-21"></div>
+					<div class="board-cell" id="c-31"></div>
+					<div class="board-cell" id="c-41"></div>
+					<div class="board-cell" id="c-51"></div>
+					<div class="board-cell" id="c-61"></div>
+					<div class="board-cell" id="c-71"></div>
+					<div class="board-cell" id="c-81"></div>
+				</div>
+				<div class="board-row">
+					<div class="board-cell" id="c-12"></div>
+					<div class="board-cell" id="c-22"></div>
+					<div class="board-cell" id="c-32"><img src="image/Pb.png"></div>
+					<div class="board-cell" id="c-42"></div>
+					<div class="board-cell" id="c-52"></div>
+					<div class="board-cell" id="c-62"></div>
+					<div class="board-cell" id="c-72"></div>
+					<div class="board-cell" id="c-82"></div>
+				</div>
+				<div class="board-row">
+					<div class="board-cell" id="c-13"></div>
+					<div class="board-cell" id="c-23"></div>
+					<div class="board-cell" id="c-33"></div>
+					<div class="board-cell" id="c-43"></div>
+					<div class="board-cell" id="c-53"><img src="image/Kw.png"></div>
+					<div class="board-cell" id="c-63"></div>
+					<div class="board-cell" id="c-73"></div>
+					<div class="board-cell" id="c-83"></div>
+				</div>
+				<div class="board-row">
+					<div class="board-cell" id="c-14"></div>
+					<div class="board-cell" id="c-24"></div>
+					<div class="board-cell" id="c-34"></div>
+					<div class="board-cell" id="c-44"></div>
+					<div class="board-cell" id="c-54"></div>
+					<div class="board-cell" id="c-64"></div>
+					<div class="board-cell" id="c-74" style="background:#800;"><img src="image/Kb.png"></div>
+					<div class="board-cell" id="c-84"></div>
+				</div>
+				<div class="board-row">
+					<div class="board-cell" id="c-15"><img src="image/Nb.png"></div>
+					<div class="board-cell" id="c-25"></div>
+					<div class="board-cell" id="c-35"></div>
+					<div class="board-cell" id="c-45"></div>
+					<div class="board-cell" id="c-55"></div>
+					<div class="board-cell" id="c-65"></div>
+					<div class="board-cell" id="c-75"></div>
+					<div class="board-cell" id="c-85"></div>
+				</div>
+				<div class="board-row">
+					<div class="board-cell" id="c-16"></div>
+					<div class="board-cell" id="c-26"></div>
+					<div class="board-cell" id="c-36"><img src="image/Pw.png"></div>
+					<div class="board-cell" id="c-46"></div>
+					<div class="board-cell" id="c-56"></div>
+					<div class="board-cell" id="c-66"></div>
+					<div class="board-cell" id="c-76"></div>
+					<div class="board-cell" id="c-86"></div>
+				</div>
+				<div class="board-row">
+					<div class="board-cell" id="c-17"></div>
+					<div class="board-cell" id="c-27"></div>
+					<div class="board-cell" id="c-37"></div>
+					<div class="board-cell" id="c-47" style="background:#800;"><img src="image/Bw.png"></div>
+					<div class="board-cell" id="c-57"></div>
+					<div class="board-cell" id="c-67"></div>
+					<div class="board-cell" id="c-77"></div>
+					<div class="board-cell" id="c-87"></div>
+				</div>
+				<div class="board-row">
+					<div class="board-cell" id="c-18"></div>
+					<div class="board-cell" id="c-28"></div>
+					<div class="board-cell" id="c-38"></div>
+					<div class="board-cell" id="c-48"></div>
+					<div class="board-cell" id="c-58"></div>
+					<div class="board-cell" id="c-68"><img src="image/Nw.png"></div>
+					<div class="board-cell" id="c-78"></div>
+					<div class="board-cell" id="c-88"></div>
+				</div>
+			</div>
+		</div>
+	</body>
+</html>

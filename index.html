@@ -2,51 +2,13 @@
 <html lang="en">
 	<head>
 		<title>GridBoardEngine.js</title>
+		<link href="https://fonts.googleapis.com/css?family=Fira+Code|Montserrat|Noto+Sans+KR|Roboto|Source+Code+Pro&display=swap" rel="stylesheet">
+		<link href="image/GBE.ico" rel="icon">
 		<link href="css/index.css" rel="stylesheet">
 		<script src="gbe.prototype.js"></script>
 		<script src="gbe.test.js"></script>
 	</head>
 	<body>
-		<!--
-/*
- * GridBoardEngine에서는 크기인 (x,y)가 그래픽에 의해 이렇게 배치될 것이다.
- * (2,4)
- * OO
- * OO
- * OO
- * OO
- * 
- * (6,3)
- * OOOOOO
- * OOOOOO
- * OOOOOO
- * 
- * 그리고 사용자는 [x,y]의 값을 저장, 조회할 것인데 이렇게 작동되야 한다.
- * (2,4), [1,3]
- * OO
- * OO
- * XO
- * OO
- * 
- * (6,3), [3,2]
- * OOOOOO
- * OOXOOO
- * OOOOOO
- * 
- * 만약에 이 엔진의 맨 위쪽, 맨 왼쪽의 인덱스는 [1,1]이며, 실제는 [0,0] 이지만, 일일이(?) 계산해야될 것이다.
- * 그래서, 개발자를 위해서 편의상 [0,0]으로 시작함을 암묵적으로 정의한다.
- * 그리고 만약 사용자를 위한 것임에 대비해, 인덱스 번호를 [0,0]으로 시작할지, [1,1]로 시작할 지 설정할 수 있다.
- * 
- * 
- * 이처럼 그래픽에 따른 배열의 구조와 일치하지 않는 현상에 대해서 해결해야 할 것이다.
- * 
- * 그리고 이 엔진의 용도는 어떠한 보드게임을 만든다고 가정했을 때, 체스나 틱택토, 리버스 게임일 염두에 두고 개발될 것이다.
- * 또한 엑셀이 될 수도 있고, 테이블이 될수도 있고, 컬러제국처럼 하거나, 지뢰찾기 게임 등 유용하게 쓰일 수 있는 프레임워크 프로젝트를 만들 것이다.
- * 
- * 
- * 
- */
--->
 		<div class="wrap">
 			<header class="top-h">
 				<h1>GridBoardEngine.js</h1>
@@ -56,6 +18,12 @@
 						<li><a href="#">About</a></li>
 						<li><a href="#">Download</a></li>
 						<li><a href="#">Contact</a></li>
+						<li><a href="chess/chess.html">Chess</a></li>
+						<li><a href="city/index.html">City Game</a></li>
+						<li><a href="#">?</a></li>
+						<li><a href="#">?</a></li>
+						<li><a href="#">?</a></li>
+						<li><a href="#">?</a></li>
 					</ul>
 				</nav>
 			</header>
@@ -66,8 +34,64 @@
 					<p>Is about GridBoardEngine.js too.</p>
 				</section>
 				<section>
-					<h3>What is GridBoardEngine.js?</h3>
-					<p>Is about GridBoardEngine.js too.</p>
+					<h3>Listen, Read Me</h3>
+<!--
+/* 
+	 * 나는 이렇게 만들고 싶다!
+	var b1 = new GBE();
+	...
+	var b2 = new GBE();
+	b2.copyBoard(b1);
+	
+	 * 아니면 이렇게
+	var engine = new GBE();
+	engine.newBoard({
+		name: 'b1',
+		x: 10,
+		y: 10
+	});
+	...
+	engine.newBoard({
+		name: 'b2',
+		x: 10,
+		y: 20
+	});
+	
+	b1.setSlashMap(2);
+	
+	b2.copyBoard(b1);
+	
+	b1.printGrid();
+	
+	 * 이런식으로 사용할 수 있도록 개발하고 싶다.
+	
+	*/
+-->
+					<p>GridBoardEngine.js is OpenSource Engine for Game to Grid.</p>
+					<p>그리드 보드 엔진은 오픈소스로서 그리드로 구성된 게임을 위한 것 입니다.</p>
+					<p>그리드나 테이블로 구성된 서비스에 데이터를 저장하고 관리하는 체계적인 것을 지원합니다.</p>
+					<p>아래는 이 시스템에 대한 설명과 알아두면 좋은 사항 입니다.</p>
+					<ul>
+						<li>이 시스템은 좌표가 있습니다. 좌표는 가로축이 X이고, 세로축이 Y값을 가집니다. 즉 (x,y)로 구성됩니다.</li>
+						<li>그리고 이 시스템은 시작 좌표기준이 존재하는데, (0,0)이나 (1,1)로 시작합니다. 이 기준이 다르면 데이터의 위치가 일치하지 않습니다. 반드시 시작인덱스를 확인하십시오.</li>
+						<li>만약 시작인덱스가 1로 시작하고 데이터가 (3,5)에 저장된다면, 왼쪽에서 3번째, 위에서 5번째에 데이터가 저장되어 있다는 것 입니다.</li>
+						<li>반대로 시작인덱스가 0으로 시작한다면, 왼쪽에서 4번째, 위에서 6번째에 데이터가 저장되는 것 입니다.</li>
+						<li>데이터에 변동이나 변경사항이 발생하면, 이 시스템은 기록스택이 발동됩니다. 기록스택이란 변동사항 등을 저장하며, 아이템의 변경 취소나 기록을 되돌아 볼 때 사용되기도 합니다.</li>
+						<li>이 시스템의 구성사항으로 보드, 그리드, 아이템으로 구성됩니다.</li>
+						<li>보드는 저장하는 테이블 자체를 가리킵니다.</li>
+						<li>그리드는 칸을 나누는 격자 선 같은 개념을 가리킵니다.</li>
+						<li>아이템은 칸 자체를 가리킵니다. 여기서 데이터가 저장됩니다.</li>
+						<li>아이템에는 어떠한 데이터의 형태든 저장을 할 수 있습니다.</li>
+						<li></li>
+						<li></li>
+						<li></li>
+						<li></li>
+						<li></li>
+						<li></li>
+					</ul>
+					<p></p>
+					<p></p>
+					<p></p>
 				</section>
 				<section>
 					<h3>이 GridBoardEngine.js는 무슨 용도로 사용되나요?</h3>
@@ -87,6 +111,58 @@
 						<code>var gridBoard = new GridBoardEngine(x,y);</code>
 					</div>
 					<p>이렇게 파라미터 값에 x의 크기와 y의 크기를 넣으면, 생성됨을 알 수 있습니다.</p>
+				</section>
+				<section>
+					<h3>GridBoard에 모든 같은 값을 넣기</h3>
+					<p>이는 의외로 간단합니다.</p>
+					<div class="code-cell">
+						<code>var val = 0;</code>
+						<code>gridBoard.setAllVal(val);</code>
+					</div>
+					<p>파라미터 val 값에 값을 넣으면 모든 보드 값이 하나의 값으로 저장됨을 확인할 수 있습니다.</p>
+					<p>이 예제에서 모든 값을 0으로 채워짐을 확인할 수 있습니다.</p>
+				</section>
+				<section>
+					<h3>GridBoard에 초기값을 추가하기</h3>
+					<p>초기값이란, 나중에 보드가 확장되면 비어있는 값을 채우는 값입니다.</p>
+					<div class="code-cell">
+						<code>var val = 0;</code>
+						<code>gridBoard.setInit(val);</code>
+					</div>
+					<p>보드 확장을 통해 발생하는 비어있는 아이템의 값을 자동으로 이 초기값으로 채워지게 됩니다.</p>
+				</section>
+				<section>
+					<h3>GridBoard에 초기값과 모든 같은 값을 동시에 넣기</h3>
+					<p>이는 의외로 간단합니다.</p>
+					<div class="code-cell">
+						<code>var val = 1;</code>
+						<code>gridBoard.initAllVal(val);</code>
+					</div>
+					<p>이 예제를 통해 초기값을 1로 설정하고, 전체 아이템 값을 1로 채워짐을 확인할 수 있습니다.</p>
+				</section>
+				<section>
+					<h3>넣기</h3>
+					<p>이는 의외로 간단합니다.</p>
+					<div class="code-cell">
+						<code>gridBoard.setAllVal(val);</code>
+					</div>
+					<p>파라미터 val 값에 값을 넣으면 모든 보드 값이 하나의 값으로 저장됨을 확인할 수 있습니다.</p>
+				</section>
+				<section>
+					<h3>GridBoard에 모든 같은 값을 넣기</h3>
+					<p>이는 의외로 간단합니다.</p>
+					<div class="code-cell">
+						<code>gridBoard.setAllVal(val);</code>
+					</div>
+					<p>파라미터 val 값에 값을 넣으면 모든 보드 값이 하나의 값으로 저장됨을 확인할 수 있습니다.</p>
+				</section>
+				<section>
+					<h3>GridBoard에 모든 같은 값을 넣기</h3>
+					<p>이는 의외로 간단합니다.</p>
+					<div class="code-cell">
+						<code>gridBoard.setAllVal(val);</code>
+					</div>
+					<p>파라미터 val 값에 값을 넣으면 모든 보드 값이 하나의 값으로 저장됨을 확인할 수 있습니다.</p>
 				</section>
 				<section>
 					<h3>GridBoard에 모든 같은 값을 넣기</h3>
@@ -266,6 +342,13 @@
 						<code>gridBoard</code>
 					</div>
 					<p></p>
+					
+					<h4>인접한 X 탐색</h4>
+					<p></p>
+					<div class="code-cell">
+						<code>gridBoard</code>
+					</div>
+					<p></p>
 				</section>
 				<section>
 					<h3>값 이동</h3>
@@ -430,6 +513,9 @@
 					</div>
 				</section>
 			</article>
+			<footer>
+				<h5>Made by Eun Chong Ju.</h5>
+			</footer>
 		</div>
 	</body>
 </html>

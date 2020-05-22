@@ -1,3 +1,4 @@
+@charset "utf-8";
 
 *{
 	border:0;
@@ -5,8 +6,16 @@
 	padding:0;
 	margin:0;
 }
+/*
+font-family:'Montserrat', sans-serif;
+font-family:'Roboto', sans-serif;
+font-family:'Noto Sans KR', sans-serif;
+font-family:'Fira Code', monospace;
+font-family:'Source Code Pro', monospace;
+*/
 a, a:link, a:active, a:visited, a:hover, a:focus {
-	
+	text-decoration:none;
+	color:black;
 }
 
 .wrap{
@@ -14,9 +23,11 @@ a, a:link, a:active, a:visited, a:hover, a:focus {
 }
 .top-h{
 	width:100%;
+	font-family:'Montserrat', sans-serif;
 }
 .top-h>h1{
-	
+	padding:10px;
+	font-size:2rem;
 }
 .top-h>nav{
 	width:100%;
@@ -26,23 +37,50 @@ a, a:link, a:active, a:visited, a:hover, a:focus {
 	flex-direction:row;
 	background:#EEE;
 	text-align:center;
+	list-style:none;
 }
 .navi>li{
 	flex:1;
 	padding:10px;
 }
 
+
 article{
+	width:100%;
 	padding:10px;
 }
-
-
-
+article>h2{
+	padding:10px;
+	font-family:'Montserrat', sans-serif;
+	font-size:1.8rem;
+}
+section{
+	border:1px solid #EEE;
+	padding:10px;
+}
+section>h3{
+	font-family:'Montserrat', 'Noto Sans KR', sans-serif;
+	font-size:1.4rem;
+}
+section>h4{
+	margin-top:5px;
+	font-family:'Roboto', 'Noto Sans KR', sans-serif;
+	font-size:1.2rem;
+	font-weight:bold;
+}
+section>p{
+	font-family:'Roboto', 'Noto Sans KR', sans-serif;
+	font-size:1.2rem;
+}
 
 
 .code-cell{
 	padding:10px;
+	margin-bottom:10px;
 	background:#555;
+	font-family:'Fira Code', monospace;
+/*	font-family:'Source Code Pro', monospace;*/
+	font-size:1.4rem;
 	color:#FFF;
 }
 .code-cell>code{
