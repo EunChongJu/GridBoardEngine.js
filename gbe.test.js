@@ -111,6 +111,13 @@ print(undefined);
 
 console.dir(gbe.toEndOfLinearSearch(0,0,5));
 
+console.dir(gbe.getRowBoard(0));
+console.dir(gbe.getRowBoard(3));
+
+console.dir(gbe.getColumnBoard(0));
+console.dir(gbe.getColumnBoard(2));
+
+
 gbe.Warning('End Testing');
 
 
@@ -214,6 +221,7 @@ var undoStack = function() {
 //     결국은 생성자를 만들게 되므로, 기존의 스택이 변경되지도 않는다는 뜻이다.
 // 자세한 사항은 test.js의 맨 밑줄에 작성된 코드를 실행해보면 알 것이다.
 
+/*
 // 이거슨 테스트용이다. Test Dragon?
 var prototype = function() {
 	this.google = function() {
@@ -255,6 +263,6 @@ var naver = new internet.naver();
 naver.map();
 internet.active();
 
-
+*/
 
 

@@ -635,6 +635,67 @@
 					<p></p>
 				</section>
 				<section>
+					<h3>SlashMap Make Up Function</h3>
+					<p>이 함수는 빗금맵을 생성하기 위한 함수로, 시작값은 증감걍 값과 같으며, 증감량은 사용자가 정할 수 있다.</p>
+					<p>빗금맵 생성 예시:</p>
+					<table>
+						<tr>
+							<td>1</td>
+							<td>2</td>
+							<td>3</td>
+							<td>4</td>
+							<td rowspan="4">&nbsp;</td>
+							<td>7</td>
+							<td>6</td>
+							<td>5</td>
+							<td>4</td>
+						</tr>
+						<tr>
+							<td>2</td>
+							<td>3</td>
+							<td>4</td>
+							<td>5</td>
+							
+							<td>6</td>
+							<td>5</td>
+							<td>4</td>
+							<td>3</td>
+						</tr>
+						<tr>
+							<td>3</td>
+							<td>4</td>
+							<td>5</td>
+							<td>6</td>
+							
+							<td>5</td>
+							<td>4</td>
+							<td>3</td>
+							<td>2</td>
+						</tr>
+						<tr>
+							<td>4</td>
+							<td>3</td>
+							<td>2</td>
+							<td>1</td>
+							
+							<td>1</td>
+							<td>2</td>
+							<td>3</td>
+							<td>4</td>
+						</tr>
+					</table>
+					<p>빗금맵 생성타입은 다음과 같다.</p>
+					<p>type= 1: NW->SE, 2: SE->NW, 3: NE->SW, 4: SW->NE</p>
+					<p>작동방식은 다음과 같다.</p>
+					<pre>
+					--->|
+					    |
+					    V
+					</pre>
+					<p>이렇게 증가시킨 값으로 저장하면, 대각선 그리기 함수를 사용해 슬래시를 그려나가면서 빗금맵을 완성한다.</p>
+					<p>이 함수는 정사각형은 물론 직사각형의 어떤 형태이든 작동할 수 있도록 설계되었다.</p>
+				</section>
+				<section>
 					<h3>GridBoardEngine.js의 탐색 함수</h3>
 					<p>아이템 탐색: 선형탐색, 주변 탐색 등, 경로 탐색은 단지 갈 수 있는 수를 찾기 위함이다.</p>
 					<p>탐색은 방법이 다른데, 이는 다음과 같다</p>

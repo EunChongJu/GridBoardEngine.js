@@ -1,43 +1,173 @@
+
 /*
-	//** TODO: 얘는 할일을 하라
-	//** NOTE: 얘는 노트한거라
-	//** FIXME: 얘는 부수거나 해체하여 없애라
-	//** CHANGES: 얘는 바꾸라
-	//** FUTURE: 얘는 미래 계획을 하라
+난 이것을 이렇게 바꾸고 싶다.
+board와 기록스택, 프레임 사이즈 등의 데이터를 Grid라는 클래스로 하고,
+이 Grid 클래스를 생성자로 쓰게 되면 이 데이터 형식이 사용 되는 것이고,
+이로써 함수들은 Grid와는 독립적으로 사용할 수 있게 될지도 모른다.
 */
+
+
+"use strict";	// 엄격모드임
 
 // 여기서는 임시로 프로토타입을 만들어서 나중에 클래스로 구현할 것이다.
 var GridBoardEngine = function() {
-	"use strict";	// 엄격모드임
+	// Board Data
+	this.board = undefined;
 	
-	this.board = undefined;	// 클래스의 핵심이 되는 보드를 저장.
-	this.index = false;	// 처음 인덱스 번호를 0으로 할지 1(true)로 할지 설정. (초기값은 0, false부터 시작한다)
-	this.init = 0;	// 초기값을 설정하여 이동 등 문제로 인해 아이템이 비워질 때 채우는 용도로 사용됨. (초기값 0)
+	// 처음 인덱스 번호를 0으로 할지 1(true)로 할지 설정. (초기값은 0, false부터 시작한다)
+	this.index = false;
+	
+	// 초기값을 설정하여 이동 등 문제로 인해 아이템이 비워질 때 채우는 용도로 사용됨. (초기값 0)
+	this.init = 0;
+	
+	// 보드의 가로 칸과 세로 칸의 길이를 저장 : 이를 프레임 사이즈라 한다.
 	this.frameX = 0;
-	this.frameY = 0;	// 보드의 가로 칸과 세로 칸의 길이를 저장 : 이를 프레임 사이즈라 한다.
+	this.frameY = 0;
+	
+	// 이 스택패스가 true면, 스택 저장을 실행하지 않고, false면 스택 저장을 실행한다.
+	// 즉 이 시스템은 패스가 발생하면 이를 true로 설정하고, 종료되면 반드시 false로 지정해야 한다.
+	// true면 패스 시스템이 발동되고, 그 동안에 실행하면서 변동된 값이 저장되지 않는다.
 	
 	// Stack : undoStack, redoStack
 	this.undoStack = [];	// 되돌리기
 	this.redoStack = [];	// 다시실행
 	
-	// 이 스택패스가 true면, 스택 저장을 실행하지 않고, false면 스택 저장을 실행한다.
-	// 즉 이 시스템은 패스가 발생하면 이를 true로 설정하고, 종료되면 반드시 false로 지정해야 한다.
-	// true면 패스 시스템이 발동되고, 그 동안에 실행하면서 변동된 값이 저장되지 않는다.
+	// 스택 패스 상태를 저장 (true면 스택 패스 모드 상태임, export할 때 이 모드가 false여야 한다.)
 	this.stackPass = false;
 	
+	// Grid : grid[{ key: value },{...},{...},]
+	this.grid = [];
 	
-	///// FUTURE: 나중에 추가할 사항::
-	// FUTURE: 셀 분할 및 합병
-	// FUTURE: 셀 합병에 따른 데이터 저장을 셀 합병목록에 추가하여 각자 같은 키 값을 가지고 있으면,
-	// FUTURE: 그 키 값을 통해 같은 값을 가진 셀과 같은 셀로 간주하여 처리한다.
-	
-	// 
-	// 
-	
-	/////
+	// grid key list : 'a1', 'a5', 'a6', ... (그리드 키의 배열은 숫자로 저장된다.)
+	this.gridKey = [];
 	
 	
-	// 처음 시작할 때 호출하는 함수. 시작 인덱스, 초기값, 프레임 사이즈 제한하는 크기 등을 설정함. 사용안해도 됨
+	////// Grid Administrate Functions.
+	
+	// 그리드는 셀 합병과 분할, 분리 등을 관여하는 것으로, 키와 값에 의해 저장된다.
+	// 그리드 합병의 원리는 예를 들어 (0,3)과 (0,4)에 같은 값을 가진 키 값이 있다면,
+	// 이 두개의 아이템이 하나의 아이템으로 합병되었다고 간주하여 처리된다.
+	// 셀 합병은 2칸 이상으로 가능하며, 사각형 그리드에 들어간다면 합병이 가능하다.
+	// 합병된 아이템의 값을 저장하고 불러오는 방법은 저장된 키 값을 찾아 해당 값을 불러오거나 변경하는 방법이다.
+	// 단 셀 합병시 많은 제약이 따르는데, 대표적으로 선 긋기와 슬래시 맵을 만드는 메서드를 실행할 수 없다.
+	
+	// 셀 합병 시 양쪽 값이 모두 동일해야 비교적 안정적으로 합병 성공할 수 있다.
+	// 그러나 양쪽 값이 다른 경우, 다음과 같은 처리 방법이 있다. 번호는 파라미터의 옵션이 된다.
+	// 1. 모든 값을 합치고 나눈 평균값	(3 + 5 = > 4, 2 + 8 = 5)
+	// 2. 문자의 경우 문자를 하나의 값으로 합침	(2 + 4 => 24, A + 3 => A3)
+	// 3. 숫자의 경우 합산한 값	(3 + 5 => 8, 2 + 8 => 10) (값이 무효라면, 이 값을 반환한다)
+	
+	/// 셀 합병 및 분할을 관여하는 함수들
+	
+	// 셀 합병 실행
+	this.cellMarger = function(item,opt) {		// 좌표({ax,ay,bx,by})와 옵션
+		var keyName;
+		var margedItemValue = this.cellMargerAdjustValue(item,opt);
+		
+		this.setItem(item.ax, item.ay, keyName);
+		this.drawRect(item.ax, item.ay, item.bx, item.by);
+		
+		this.margedItemValue(margedItemValue);
+	}
+	
+	// 셀 합병에 있어서 A와 B, 그리고 그 이상의 아이템을 어떻게 합병할 것인지 옵션에 따라 값을 반환한다.
+	this.cellMargerAdjustValue = function(item, opt) {
+		var itemArr = this.getArrRectA2B(item.ax, item.ay, item.bx, item.by);
+		var adjustedValue;
+		
+		for (var i = 0; i < itemArr.length; i++) adjustedValue += itemArr[i];
+		
+		if (opt == 1) adjustedValue /= itemArr.length;
+		
+		return adjustedValue;
+	}
+	
+	// A부터 B까지 안의 네모 안에 있는 값을 배열로 반환
+	this.getArrRectA2B = function(ax,ay,bx,by) {
+		var arr = [];
+		
+		return arr;
+	}
+	
+	// 셀 합병으로 새로운 키가 추가됨
+	this.margedItemValue = function(val) {
+		var keyName = this.gridKeyGeneration();
+		this.pushMargedItem(keyName, val);
+	}
+	
+	this.pushMargedItem = function(key, val) {
+		this.grid.push({ key: '', value: val });
+	}
+	
+	// 셀 합병이 취소되거나 분할됨
+	this.dividedItemValue = function(key) {
+		var keyName = ((key.substr(0,1) == 'a') ? key : 'a' + key);
+		
+		// 분할될 키 값이 일치하는 것을 찾아 없앤다.
+		this.removeGridKey(keyName);
+	}
+	
+	// 그리드 키 값에 없는 가능한 키 값을 찾는다.
+
+	// 여기서 발생하는 문제에 대처하는 방법을 나열해본다.
+	/*
+	먼저 키 값에 다음과 같은 배열이 있다.
+	[1,2,3]
+
+	그러나 a2라는 키 값이 분할(분리)되면서 2가 제거된다.
+	[1,3]
+
+	그리고 다시 새로운 키 값이 추가된다.
+	여기서 1을 먼저 탐색하고 있음을 확인하면 키 값을 증가시킨다.
+	증가하면 2가 된다. 2를 탐색한다. 그리고 걀과로 2가 없음을 확인한다.
+
+	2가 추가된다.
+	[1,3,2]
+
+	그 다음에 새로운 키가 추가되면 모두 탐색하여 없는 수가 4임을 확인하고, 추가한다.
+	[1,3,2,4]
+	*/
+	
+	// 키 값을 생성해주는 함수
+	this.gridKeyGeneration = function() {
+		var keyNumber = 1;
+		
+		if (!this.gridIsEmpty()) {
+			// for문에서 key 값에 중복되지 않는 최솟값을 구할려고 했으나 복잡해서 그냥 최댓값으로 구한다.
+			for (var i = 0; i < this.gridKey.length; i++) {
+				if (this.gridKey[i] >= keyNumber) keyNumber = this.gridKey[i] + 1;
+			}
+		}
+		
+		var keyName = 'a' + keyNumber;
+		this.gridKey.push(keyNumber);
+		
+		return keyName;
+	}
+	
+	// 분할됨으로 사라지게 될 그리드의 키를 제거.
+	this.removeGridKey = function(key) {
+		for (var i = 0; i < this.gridKey.length; i++) {
+			if (this.gridKey[i] == key) this.gridKey.splice(i,1);
+		}
+	}
+	
+	// 그리드가 비었는지 확인. (그리드가 비었어요? 네! 비었어요 true, 아니요 안비었는데요? false)
+	this.gridIsEmpty = function() {
+		return this.grid.length == 0;
+	}
+	
+	
+	
+	
+	
+	///// GridBoardEngine Common(?) Functions.
+	
+	// GridBoardEngine Version
+	this.version = function() { return "1.5.2"; }
+	
+	
+	// 처음 시작할 때 호출하는 함수. 시작 인덱스, 초기값, 프레임 사이즈 제한하는 크기 등을 한꺼번에 설정함. (사용안해도 됨)
 	// this.newClass({x:~,y:~,init:~,index:~});
 	this.newClass = function(e) {
 		// 저건 나중에 만들도록 하죠.
@@ -61,7 +191,7 @@ var GridBoardEngine = function() {
 		return valid;
 	};
 	
-	// 보드의 유효성 확인
+	// 보드 유효 확인
 	this.validBoard = function(board) {
 		var valid = false;
 		if (Array.isArray(board)) {
@@ -111,21 +241,25 @@ var GridBoardEngine = function() {
 		return this.board;
 	};
 	
-	// 해당 보드 안의 각자 그리드의 Row마다 출력.
-	this.printGridRows = function() {
-		for (var y in this.board) {
-			var arr = new Array();
-			for (var x in this.board[y]) arr.push(this.board[y][x]);
-			this.Direction(arr);
-		}
-	};
-	
 	// 그리드를 만든다. 새로운 그리드를 세팅하거나 사이즈를 다시 세팅할 때만 사용한다.
 	this.makeGrid = function(fx,fy) {	// (fx,fy) 만큼의 아이템 그리드를 생성.
 		var newBoard = new Array(fy);	// new Board
 		for (var i = 0; i < fy; i++) newBoard[i] = new Array(fx);	// for of나 for in은 새로 생성한다.
 		return newBoard;
 	};
+	
+	// (절대값 기준) 몇번째 ROW를 배열로 반환한다.
+	this.getRowBoard = function(r) {
+		return this.getBoard()[r];
+	};
+	
+	// (절대값 기준) 몇번째 COULUMN을 배열로 반환한다.
+	this.getColumnBoard = function(c) {
+		var list = [];
+		for (var y = 0; y < this.getBoard().length; y++) list.push(this.getIndexItem(c,y));
+		return list;
+	}
+	
 	
 	
 	
@@ -140,36 +274,234 @@ var GridBoardEngine = function() {
 	
 	// NOTE: [엑스포트, 임포트]될 데이터는 기록스택, 보드 내 그리드 셋 데이터, 보드 내 모든 아이템 값을 모두 합한 것.
 	
-	// CHANGES: 이 시스템의 모든 데이터를 추출
+	// CHANGES: 이 시스템의 모든 데이터를 추출 -> JSON형태의 파일로 다운로드
 	// TODO: 여기에 기록을 포함시킬 것인가 말것인가, 그리드는 원형으로 하느냐 그대로 가느냐 그런 것을 결정한다.
-	this.exportData = function() {
-		
-		
-		
-		var undoStack = this.undoEject();
-		var redoStack = this.redoEject();
-		
-		var dataSet = {
-			"history": [undoStack, redoStack],	// History Stack data all
-			"data": [],	// data, all items data
-			"grid": [],	// grid row * cell info
-			"boardName": "board",	// board name
-			"?":0	// ?
+	
+	// JSON 형태의 표준 (예시)
+	this.portDataSet = function() {
+		// It type is JSON for Import and Export.
+		var data = {
+			"name": "GridBoardEngine",		// 그냥 이름 (심심해서 넣어봄)
+			"version": "1.5.2",		// 버전
+			"index": false,		// 시작 인덱스
+			"init": 0,		// 초기값
+			"frameSize": {	// 프레임 사이즈
+				"x": 4,
+				"y": 4
+			},
+			"board": [	// 이 방법은 x가 어디고 y가 어디인지 헷갈리는 문제가 있다. 그래서 newBoard에 참조
+				[1, 2, 3, 4],
+				[5, 6, 7, 8],
+				[9, 10, 11, 12],
+				[13, 14, 15, 16]	// JSON 배열이 순서대로 저장되고 나오는지 확인이 안됨
+			],
+			"newBoard": [	// 이게 더 편해 보이는데 용량이 좀 나갈 수 있다는 문제가 있다.
+				{
+					"index": {"x": 0, "y": 0},
+					"data": {
+						"data": 1,	// data - check type under data.
+						"type": 1	// int=1, string=3, null=0, undefined=4, object=5, margeItem=2
+					}
+				},
+				{
+					"index": {"x": 1, "y": 0},
+					"data": {
+						"data": 2,
+						"type": 1
+					}
+				},
+				{
+					"index": {"x": 2, "y": 0},
+					"data": {
+						"data": 3,
+						"type": 1
+					}
+				},
+				{
+					"index": {"x": 3, "y": 0},
+					"data": {
+						"data": 4,
+						"type": 1
+					}
+				},
+				{
+					"index": {"x": 0, "y": 1},
+					"data": {
+						"data": 5,
+						"type": 1
+					}
+				},
+				{
+					"index": {"x": 1, "y": 1},
+					"data": {
+						"data": 6,
+						"type": 1
+					}
+				},
+				{
+					"index": {"x": 2, "y": 1},
+					"data": {
+						"data": 7,
+						"type": 1
+					}
+				},
+				{
+					"index": {"x": 3, "y": 1},
+					"data": {
+						"data": 8,
+						"type": 1
+					}
+				},
+				{
+					"index": {"x": 0, "y": 2},
+					"data": {
+						"data": 9,
+						"type": 1
+					}
+				},
+				{
+					"index": {"x": 1, "y": 2},
+					"data": {
+						"data": 10,
+						"type": 1
+					}
+				},
+				{
+					"index": {"x": 2, "y": 2},
+					"data": {
+						"data": 11,
+						"type": 1
+					}
+				},
+				{
+					"index": {"x": 3, "y": 2},
+					"data": {
+						"data": 12,
+						"type": 1
+					}
+				},
+				{
+					"index": {"x": 0, "y": 3},
+					"data": {
+						"data": 13,
+						"type": 1
+					}
+				},
+				{
+					"index": {"x": 1, "y": 3},
+					"data": {
+						"data": 14,
+						"type": 1
+					}
+				},
+				{
+					"index": {"x": 2, "y": 3},
+					"data": {
+						"data": 15,
+						"type": 1
+					}
+				},
+				{
+					"index": {"x": 3, "y": 3},
+					"data": {
+						"data": 16,
+						"type": 1
+					}
+				},
+			],
+			"history": {	// 스택패스는 아직도 해결 못함. 그러므로 스택패스가 정립되고, 완성되면 여기에 추가하는걸로.
+				"undo": [
+					{
+						"id": 1,	// id을 사용하는 이유는 JSON 배열이 순서를 보장하지 않기 때문임.
+						"index": {	// id 값을 통해 순서대로 배열을 저장할 수 있음을 보장할 수 있다.
+							"x": 2,
+							"y": 3
+						},
+						"data": {
+							"before": 1,
+							"after": 15
+						}
+					},
+					{
+						"id": 2,
+						"index": {
+							"x": 1,
+							"y": 0
+						},
+						"data": {
+							"before": 0,
+							"after": 2
+						}
+					}
+				],
+				"redo": [
+					{
+						"id": 3,
+						"index": {
+							"x": 3,
+							"y": 3
+						},
+						"data": {
+							"before": 16,
+							"after": 12
+						}
+					}
+				]
+			},
+			"gridSet": {
+				"k1": {		// 이 방법을 통해 보드 내 셀에 저장된 값인 키 값을 찾아 하나의 값으로 간주한다.
+					"data": 1,
+					"type": 1
+				},
+				"k2": {
+					"data": "a3",
+					"type": 3
+				}
+			},
+			"item": "item",
+			"grid": "grid"
 		};
+		return data;
+	};
+	
+	// JSON 형태의 모든 기록을 반출한다.
+	this.exportData = function() {
+		// 데이터 형식을 불러온다.
+		var dataSet = this.portDataSet();
 		
-		// 무언가의 과정을 거쳐서 인코딩된다. 그리고 인코딩된 값을 반환하게 된다.
+		// 그리드 보드 엔진 내 사용되는 기본 값이나 중요한 값을 불러와 저장한다.
+		var init = this.getInit();
+		dataSet.init = init;
+		
+		// 기록 스택을 불러와 데이터 형식에 맞게 저장한다. (패스 데이터도 포함)
+		var undo = this.ejectUndoStack();
+		dataSet.history.undo = undo;
+		
+		var redo = this.ejectRedoStack();
+		dataSet.history.redo = redo;
+		
+		// 프레임 사이즈를 불러와 데이터 형식에 맞게 저장한다.
+		var fs = this.getFrameSize();
+		dataSet.frameSize.x = fs.x;
+		dataSet.frameSize.y = fs.y;
+		
+		// GridSet 저장
 		
 		return dataSet;
 	};
 	
 	// TODO: 외부에 있는 데이터를 불러와 시스템을 구성한다. 불러내는
+	
+	// JSON 형태의 코드를 불러와 로딩한다.
 	this.importData = function(data) {
 		
 		// 앞에서 인코딩된 코드를 디코딩하여 어떤 절차를 거친 다음, 해독한다.
 		
 		var dataSet = data;
 		
+		// 프린팅
 		this.Table(dataSet);
+		
 		// 그리고 추출한 데이터를 기반으로 보드 크기를 확인하여 세팅하고,
 		
 		// 보드를 세팅하면, 그리드 구성을 파악하고,
@@ -177,29 +509,93 @@ var GridBoardEngine = function() {
 		// 아이템의 모든 데이터들을 순서대로 셀칸 안에 삽입한다.
 		
 		// 그 다음, 기록스택을 불러와 데이터를 로드한다.
-		this.undoLoad(data.history[0]);
-		this.redoLoad(data.history[1]);
+		this.loadUndoStack(data.history.undo);
+		this.loadRedoStack(data.history.redo);
 		
 		// 이 모든 절차를 완료하고 시스템을 실행하는데에 성공하면 true를 반환한다.
 		
 		return true;
 	};
 	
+	//// Port Data Set [import, export] data set micro functions
 	
-	// TODO: code를 type에 명시한대로 번역한다.	type = {start, end}	// start로 된 코드를 end로 번역한다.
-	this.translate_PASSWORD_CODE = function(code, type) {
-		var start = type.start;
-		var end = type.end;
-		if (start == 10 || start == 12 || start == 14 || start == 16 || start == 36) {
-			if (end == 10 || start == 12 || start == 14 || start == 16 ||  end == 36) return code;
-			else return null;
+	/// stack Import (Load, set)
+	
+	this.loadUndoStack = function(undoData) {
+		var undoArr = [];
+		
+		for (var i = 0; i < undoData.length; i++) {
+			var id = undoData[i].id;
+			var ix = undoData[i].index.x;
+			var iy = undoData[i].index.y;
+			var beforeData = undoData[i].data.before;
+			var AfterData = undoData[i].data.after;
+			
+			undoArr.push(undoData[i]);	// 아직 undo와 redo의 기록 스택 형식을 정의 안했음.
 		}
-		else return null;
+		
+		this.undoSave(undoArr);
+	};
+	
+	this.saveUndoStack = function(undoArr) {
+		this.undoStack = undoArr;
 	}
 	
 	
+	this.loadRedoStack = function(redoData) {
+		
+	};
+	
+	this.saveRedoStack = function(redoArr) {
+		this.redoStack = redoArr;
+	}
+	
+	/// stack Export (Eject, get)
+	
+	this.ejectUndoStack = function() {
+		return this.undoStack;
+	};
+	
+	this.ejectRedoStack = function() {
+		return this.redoStack;
+	};
 	
 	
+	/// board&grid Load and Eject
+	
+	this.boardLoad = function(board) {
+		this.board = board;
+	};
+	
+	this.boardEject = function() {
+		return { grid: grid, board: board };
+	};
+	
+	this.gridLoad = function(grid) {
+		this.grid = grid;
+	};
+	
+	this.gridEject = function() {
+		return { grid: grid };
+	}
+	
+	// 
+	
+	
+	
+	// Return to Data Type Number for PortDataset
+	this.portDataTypeSet = function(data) {
+		var type = (typeof data);	// int=1, string=3, null=0, undefined=4, object=5, margeItem=2
+		if (type == "number") return 1;
+		else if (type == "string") return 3;	// 2는 margedItem의 값이라 margedItem을 넣으면 문자열을 반환
+		else if (type == "undefined") return 4;
+		else if (type == "object") return 5;	// null을 object로 인식하기도 함
+		else if (type == "boolean") return 6;
+		else if (type == "function") return 7;
+		else if (type == "bigint") return 8;
+		else if (type == "symbol") return 9;
+		else return 0;	// 이건 명시적 오류거나, 이하 버전에서 symbol을 이렇게 인식할수도 있다.
+	}
 	
 	
 	
@@ -230,7 +626,7 @@ var GridBoardEngine = function() {
 		else if (check == 3) result = this.resizeFrame({x: x, y: y, valid: valid, process: process});
 		else {				// 이건 무조건 0 아니면  4인데, 이거나 저거나 둘다 에러행
 			if (check == 0) this.Log("변동이 없습니다!");
-			else this.methodError('changeFrameSize', "It's invalid value - frameSize or parameter.");
+			else this.MethodError('changeFrameSize', "It's invalid value - frameSize or parameter.");
 			result = false;
 		}
 		
@@ -287,12 +683,7 @@ var GridBoardEngine = function() {
 		
 //		var beforeBoard = this.getBoard();	// 이거는 나중에 보드를 원래대로 복구할 때 사용
 		
-		// 확장 먼저 -> 축소 나중에
 		// args(x, y, valid, progress)를 사용하지 않는다. 변형된 값을 사용해야 한다.
-		
-		// A(7,9) -> B(9,7)이면 다음과 같이 처리된다.
-		// B의 x값이 크므로 x 기준으로 확장한다. (7,9) -> (9,9)
-		// 그리고 B의 y값을 기준으로 축소한다. (9,9) -> (9,7)
 		
 		if ((args.x > before.x) && (args.y < before.y)) {	// x 기준으로 먼저 확장하고 y 기준으로 축소
 			
@@ -380,6 +771,9 @@ var GridBoardEngine = function() {
 	
 	
 	
+	
+	
+	
 	/// TODO:기록 스택 - 이 함수들은 실행되면 보드에 영향을 줄 수 있으며, 보드가 이전 또는 다음으로 변경될 수 있다.
 	
 	// 기록 저장
@@ -416,6 +810,9 @@ var GridBoardEngine = function() {
 	}
 	
 	
+	
+	
+	
 	// CHANGES: 스택전용 데이터 형식으로 변환하는 함수
 	this.convertStackData = function(x,y,beforeData, afterData) {
 		if (beforeData == afterData) return {type: 0};
@@ -438,6 +835,8 @@ var GridBoardEngine = function() {
 		// 형태에 따라 타입 뿐만 아니라 -d에 저장되거나 -b, -a에 저장될 수도 있다.
 		
 	}
+	
+	
 	
 	
 	//// 기록 스택을 정상적으로 작동할 수 있도록 하는 마이크로 함수들
@@ -478,22 +877,23 @@ var GridBoardEngine = function() {
 	this.undoTable = function() { this.Table(this.undoStack); }
 	this.redoTable = function() { this.Table(this.redoStack); }
 	
-	//// stack Load and Eject (보드 불러오기 전용 : 일상에서 사용금지)
-	// stack Import (Load, set)
-	this.undoLoad = function(undoArr) { this.undoStack = undoArr; }
-	this.redoLoad = function(redoArr) { this.redoStack = redoArr; }
-	// stack Export (Eject, get)
-	this.undoEject = function() { return this.undoStack; }
-	this.redoEject = function() { return this.redoStack; }
 	
+	
+	
+	//// 탐색함수들
 	
 	// 여기에 있는 아래의 함수들은 모두 for에서 y 안에 x 방식으로 탐색한다는 것이다.
 	// 여기서 조건이란 판별함수를 파라미터에 대입되어 계산한다는 것이다.
 	// 조건의 형식은 다음과 같다. i => i < 0
 	
-	// 할일 : 아래의 복잡한 것을 간결하게 만들고 기능을 완성시킬 것,
+	// TODO : 아래의 복잡한 것을 간결하게 만들고 기능을 완성시킬 것,
 	// 또한 게임을 위해 제대로 작동하기 위한 함수를 개발할 것
 	// 이 함수에서 고차함수 기능이 절대적으로 필요한 부분이 있으므로, 이를 배워올 것!
+	
+	// 분석 결과, 고차함수를 활용하여 만든 탐색함수를 통해
+	// 다른 함수(예를 들어 indexOf, findIndex, findAll, findIndexAll 등의 함수)를
+	// 탐색 함수 하나로 모든 것을 구현할 수 있다. 
+	// indexOf같으면 함수 내에 작성하여 처음 발견되는 일치하는 값의 인덱스를 반환하고 종료시키면 되는 것이다!
 	
 	// TODO: 반복되는 부수적인 요소를 줄이기 위한 함수 작성하기
 	this.boardEach = function(func) {
@@ -595,52 +995,42 @@ var GridBoardEngine = function() {
 	/// 인덱스가 밖으로 나가는지 검사해야 됨
 	
 	
+	
+	
+	
 	// 시작좌표에 따라 해당 좌표를 계산하여 해당 위치에 있는 아이템의 값을 반환하는 함수.
 	this.getItem = function(x,y) {	// 해당 좌표값의 값을 반환.
-		if (!this.validIndex(x,y)) this.methodError('getItem','Invalid - The index of Item Can\'t set outside.');
+		if (!this.validIndex(x,y)) 
+			this.MethodError('getItem','Invalid - The index of Item Can\'t set outside.');
 		else return this.getIndexItem(this.convertIndex(x), this.convertIndex(y));
 	};
 	
 	// 시작좌표에 따라 해당 좌표의 아이템에 값을 덮어쓰기 하거나 저장하는 함수.
 	this.setItem = function(x,y,val) {
-		if (!this.validIndex(x,y)) this.methodError('setItem','invalid - The index of Item Can\'t set outside.');
+		if (!this.validIndex(x,y)) this.MethodError('setItem','invalid - The index of Item Can\'t set outside.');
 		else this.setIndexItem(this.convertIndex(x), this.convertIndex(y), val);
 	};
 	
-	// (x,y)의 값을 obj인 {x,y} 형태로 반환하는 함수.
-	this.getIndex = function(x,y) {	// (x,y) 값을 obj 형태로 변환하여 반환.
-		return {x: parseInt(x), y: parseInt(y)};	// obj를 저장하면, 문자열로 저장되는 것을 해결함.
-	};
+	// (x,y)의 값을 {x,y} 형태로 반환하는 함수.
+	this.getIndex = function(x,y) {	return {x: parseInt(x), y: parseInt(y)}; };
 	
-	// (x,y)의 값을 절대좌표값으로 변환하는 함수.
-	this.setIndex = function(ix,iy) {	// 0을 기준으로 인덱스({x,y}) 위치를 계산하여 인덱스의 위치를 obj로 반환.
-		return this.getIndex(this.convertIndex(ix), this.convertIndex(iy));
-	};
+	// (x,y)의 값을 절대좌표값으로 변환하는 함수. (0을 기준으로 위치를 계산하여 {x,y}로 반환)
+	this.setIndex = function(ix,iy) { return this.getIndex(this.convertIndex(ix),this.convertIndex(iy)); };
 	
-	// 시작 인덱스 값에 따라 시작 인덱스가 1로 시작하면 0을 반환하고, 0으로 시작하면 그대로 반환된다.
-	this.convertIndex = function(index) {
-		return ((this.index) ? --index : index);
-	};
+	// 시작 인덱스 값에 따라 시작 인덱스가 1로 시작하면 0을 반환하고, 0으로 시작하면 그대로 반환함.
+	this.convertIndex = function(index) { return ((this.index) ? --index : index); };
 	
 	// 절대좌표 기준 해당 좌표의 값을 반환하는 함수.
-	this.getIndexItem = function(x,y) {
-		return this.board[y][x];
-	};
+	this.getIndexItem = function(x,y) { return this.board[y][x]; };
 	
 	// 절대좌표 기준 해당 좌표에 값을 저장하는 함수.
-	this.setIndexItem = function(x,y,val) {
-		this.board[y][x] = val;
-	};
+	this.setIndexItem = function(x,y,val) { this.board[y][x] = val; };
 	
 	// 해당 좌표에 저장된 값이 초기값인지 확인하는 함수. (아이템 값이 초기값이면 비었다고 간주)
-	this.isEmptyItem = function(x,y) {
-		return this.getItem(x,y) == this.getInit();
-	};
+	this.isEmptyItem = function(x,y) { return this.getItem(x,y) == this.getInit(); };
 	
 	// 해당 절대좌표에 저장된 값이 초기값인지 확인하는 함수. (아이템 값이 초기값이면 비었다고 간주)
-	this.isEmptyIndexItem = function(x,y) {
-		return this.getIndexItem(x,y) == this.getInit();
-	};
+	this.isEmptyIndexItem = function(x,y) { return this.getIndexItem(x,y) == this.getInit(); };
 	
 	// A(x,y)의 값을 B(x,y)로 이동. (Ctrl+X -> Ctrl+V)
 	this.move = function(ax,ay,bx,by) {
@@ -649,9 +1039,7 @@ var GridBoardEngine = function() {
 	};
 	
 	// A(x,y)의 값을 B(x,y)로 복사. (Ctrl+C -> Ctrl+V)
-	this.copy = function(ax,ay,bx,by) {
-		this.setItem(bx, by, this.getItem(ax,ay));
-	};
+	this.copy = function(ax,ay,bx,by) { this.setItem(bx, by, this.getItem(ax,ay)); };
 	
 	// A부터 B까지 (가로,세로,대각)선 안에 들어오면 선을 그리는 함수. (선형 유효하지 않으면 에러 출력)
 	this.draw = function(ax,ay,bx,by) {
@@ -661,9 +1049,9 @@ var GridBoardEngine = function() {
 			if (type == 1) return this.drawLinearHorizon(ax,bx,ay);
 			else if (type == 2) return this.drawLinearVertical(ay,by,ax);
 			else if (type == 3) return this.drawLinearDiagonal(ax,ay,bx,by);
-			this.methodError('draw','It\'s not matched Linear Type');
+			this.MethodError('draw','It\'s not matched Linear Type');
 		}
-		else this.methodError('draw','The index of Item Cannot draw outside.');
+		else this.MethodError('draw','The index of Item Cannot draw outside.');
 	};
 	
 	// 가로선(수평선)을 그리는 함수.
@@ -672,7 +1060,7 @@ var GridBoardEngine = function() {
 			var x = this.setMinAndMax(ax,bx);
 			for (var fx = x.min; fx <= x.max; fx++) this.copy(x.min,aby,fx,aby);
 		}
-		else this.methodError('drawLinearHorizon','invalid Horizon Linear');
+		else this.MethodError('drawLinearHorizon','invalid Horizon Linear');
 	};
 	
 	// 세로선(수직선)을 그리는 함수.
@@ -681,7 +1069,7 @@ var GridBoardEngine = function() {
 			var y = this.setMinAndMax(ay,by);
 			for (var fy = y.min; fy <= y.max; fy++) this.copy(abx,y.min,abx,fy);
 		}
-		else this.methodError('drawLinearVertical','invalid Vertical Linear');
+		else this.MethodError('drawLinearVertical','invalid Vertical Linear');
 	};
 	
 	// 대각선을 그리는 함수. (대각선 타입에 따라 나누어 실행한다)
@@ -694,9 +1082,9 @@ var GridBoardEngine = function() {
 				if (this.validDiagonalType(x,y,ax,ay)) this.drawLinearDiagonalDown(x,y,ax,ay);
 				else this.drawLinearDiagonalUp(x,y,ax,ay);
 			}
-			else this.methodError('drawLinearDiagonal','invalid index');
+			else this.MethodError('drawLinearDiagonal','invalid index');
 		}
-		else this.methodError('drawLinearDiagonal','invalid Diagonal Linear');
+		else this.MethodError('drawLinearDiagonal','invalid Diagonal Linear');
 	};
 	
 	// A부터 NW->SE 방향으로 대각선을 그리는 함수.
@@ -750,7 +1138,7 @@ var GridBoardEngine = function() {
 		else if (dir == 7) this.moveDiagonal(ax,ay,ax+dc,ay+dc);
 		else if (dir == 8) this.moveDiagonal(ax,ay,ax-dc,ay+dc);
 		else {
-			this.methodError('moveLinear','invaild dir');
+			this.MethodError('moveLinear','invaild dir');
 			return false;
 		}
 		return true;	// default가 작동되지 않는 한, true를 반환
@@ -800,27 +1188,17 @@ var GridBoardEngine = function() {
 		return ((pX == pY) && ((pX > 0) && (pY > 0)));
 	};
 	
-	// NOTE: 이 함수는 빗금맵을 생성하기 위한 함수로, 시작값은 증감걍 값과 같으며, 증감량은 사용자가 정할 수 있다.
-	/** 빗금맵 생성 예시:
-	1 2 3 4		7 6 5 4
-	2 3 4 5		6 5 4 3
-	3 4 5 6		5 4 3 2
-	4 5 6 7		4 3 2 1
-	*/
-	// 빗금맵 생성타입은 다음과 같다.
-	// type= 1: NW->SE, 2: SE->NW, 3: NE->SW, 4: SW->NE
-	// 작동방식은 다음과 같다.
-	// --->|
-	//     |
-	//     V
-	// 이렇게 증가시킨 값으로 저장하면, 대각선 그리기 함수를 사용해 슬래시를 그려나가면서 빗금맵을 완성한다.
-	// 이 함수는 정사각형은 물론 직사각형의 어떤 형태이든 작동할 수 있도록 설계되었다.
+	
+	
+	
+	
+	// 타입과 증감량에 따라 보드에 슬래시 맵을 생성하는 함수.
 	this.setSlashMap = this.setSolidusMap = function(type,add) {
 		if (type == 1) return this.setSlashMapNWtoSE(add);
 		else if (type == 2) return this.setSlashMapSEtoNW(add);
 		else if (type == 3) return this.setSlashMapNEtoSW(add);
 		else if (type == 4) return this.setSlashMapSWtoNE(add);	// 새로운 맵을 만들어 덮어쓰기 성공여부를 반환.
-		else this.methodError('setSlashMap', 'There is not such type');
+		else this.MethodError('setSlashMap', 'There is not such type');
 		return null;
 	};
 	
@@ -915,7 +1293,7 @@ var GridBoardEngine = function() {
 	// 방향에 대한 값을 반환
 	// 방향 [1:N, 2:W, 3:S, 4:E, 5:NW, 6:NE, 7:SE, 8:SW]
 	this.setDirPos = function(dir) {
-		if ((dir < 1) || (dir > 8)) this.methodError('setDirPos','Is not invalid dir value');
+		if ((dir < 1) || (dir > 8)) this.MethodError('setDirPos','Is not invalid dir value');
 		else return {dx: this.setDirPosX(dir), dy: this.setDirPosY(dir)};
 	};
 	
@@ -945,12 +1323,17 @@ var GridBoardEngine = function() {
 	};
 	
 	
+	
+	
+	
+	
+	
+	
+	
 	/// NOTE: 아주 중요한 핵심인데, 간단한 함수이면서도 중요한 라이브러리 모음
 	
 	// 아이템 유효 검사. undefined가 아닌 한 true를 반환. undefined -> false.
-	this.validItem = function(ix,iy) {
-		return !((typeof this.getItem(ix,iy)) == "undefined");
-	};
+	this.validItem = function(ix,iy) { return !((typeof this.getItem(ix,iy)) == "undefined"); };
 	
 	// 시작 인덱스와 프레임 크기를 확인하고 인덱스 유효여부를 반환. 만약 밖으로 나간다->false. (밖으로 나가는지 검사)
 	this.validIndex = function(ix,iy) {
@@ -968,76 +1351,57 @@ var GridBoardEngine = function() {
 	};
 	
 	// 저장된 시작 인덱스 값을 확인하고 반환.
-	this.getStartIndex = function() {
-		return (this.index ? 1 : 0);
-	};
+	this.getStartIndex = function() { return (this.index ? 1 : 0); };
 	
 	// 시작 인덱스를 지정 (없으면 자동으로 바뀜)
 	this.setStartIndex = function(index) {
 		this.index = ((index === undefined) ? !this.index : this.convertIndexValue(index));
-	}
+	};
 	
 	// 초기값을 저장하는 함수.
-	this.setinit = function(val) {
-		this.init = val;
-	};
+	this.setinit = function(val) { this.init = val; };
 	
 	// 초기값을 반환하는 함수.
-	this.getInit = function() {
-		return this.init;
-	};
+	this.getInit = function() { return this.init; };
+	
+	// NotNull (null이 아니라면 true를 반환)
+	this.NotNull = function(val) { return (val !== null); };
+	
+	// NotUndefine
+	this.NotUndefined = function(val) { return (val !== null); };
+	
+	// 홀수 또는 짝수
+	this.isOdd = function(val) { return val%2!=0; };
+	this.isEven = function(val) { return val%2==0; };
 	
 	/// console의 종합세트임. (에러 감지오류를 해결하기 위함)
-	this.Log = function(str) {
-		console.log(str);
-	}
-	this.Table = function(data) {
-		console.table(data);
-	}
-	this.Direction = function(data) {
-		console.dir(data);
-	}
-	this.Warning = function(str) {
-		console.warn(str);
-	}
-	this.Error = function(str) {
-		console.error(str);
-	}
-	this.methodError = function(method,script) {
-		this.Error(method+"() method: "+script);
-	}
-	this.printGrid = function() {
-		this.Table(this.getBoard());
-	}
+	this.Log = function(str) { console.log(str); };
+	
+	this.Table = function(data) { console.table(data); };
+	
+	this.Direction = function(data) { console.dir(data); };
+	
+	this.Warning = function(str) { console.warn(str); };
+	
+	this.Error = function(str) { console.error(str); };
+	
+	this.MethodError = function(method,script) { this.Error(method+"() method: "+script); };
+	
+	this.printGrid = function() { this.Table(this.getBoard()); };
+	
 	
 	// 위의 모든 에러콘솔을 하나로 관리하기 위한 시스템 - 코드를 정리한 테이블을 따로 만들어 놓을 예정임. 이에 준수해 함수를 만들것
 	this.errorCode = function(num) {	// int형 타입이지만, 
-		var script = "";
-		switch(num) {
-			case 0:
-				script = "A";
-				break;
-			case 1:
-				script = "B";
-				break;
-			case 2:
-				script = "C";
-				break;
-			case 3:
-				script = "D";
-				break;
-			case 4:
-				script = "E";
-				break;
-			default:
-				script = "F";
-				break;
-		}
-		return script;
+		if (num == 1) return "A";
+		else if (num == 2) return "B";
+		else if (num == 3) return "C";
+		else if (num == 4) return "D";
+		else if (num == 5) return "E";
+		else return "F";
 	};
 	
 };
 
 // TEST ZONE
 var GBE = new GridBoardEngine();
-GBE.board;
+GBE.version();

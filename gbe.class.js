@@ -1,7 +1,7 @@
 
 
 class GridBoardEngine {
-	constructor(index) {
+	constructor(index) {	// 이 부분은 프로토타입에 있는 newClass()의 기능과 같다.
 		this.index = index;
 	}
 	
