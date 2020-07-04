@@ -59,12 +59,18 @@ var GridBoardEngine = function() {
 	
 	/// 셀 합병 및 분할을 관여하는 함수들
 	
+	// 뭐 또 생각남.
+	// 합병 후 해당되는 셀들 안에 공통된 값을 저장하게 되는데, 만약 합병된 셀들 중 하나의 셀 값을 바꾸게 된다면
+	// 이 값을 바꾸는 것이 아닌 이 키값을 찾아 바꾸어야 한다.
+	// 그리고 합병 후 셀을 다시 분할하는 함수 역시 간단하다.
+	// 그러나 분할 이후의 값은 어떻게 처리하고 지정해야 하는가?
+	
 	// 셀 합병 실행
 	this.cellMarger = function(item,opt) {		// 좌표({ax,ay,bx,by})와 옵션
 		var keyName;
 		var margedItemValue = this.cellMargerAdjustValue(item,opt);
 		
-		this.setItem(item.ax, item.ay, keyName);
+		this.setItem(item.ax, item.ay, keyName);	// 합병 후 공통된 값을 지정하게 됨
 		this.drawRect(item.ax, item.ay, item.bx, item.by);
 		
 		this.margedItemValue(margedItemValue);

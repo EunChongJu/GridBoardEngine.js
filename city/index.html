@@ -4,60 +4,170 @@
 		<meta charset="utf-8">
 		<title>GridBoardEngine.js - City Game</title>
 		
+		<link href="https://fonts.googleapis.com/css?family=Montserrat+Alternates&amp;display=swap" rel="stylesheet">
+		<script src="https://kit.fontawesome.com/a076d05399.js"></script>
+		
 		<link href="css/game.css" rel="stylesheet">
 		
-		<script src="../GridBoardEngine.js"></script>
-		<script src="js/game.js"></script>
+<!--		<script src="../GridBoardEngine.js"></script> 게임 실행에 필요한 시스템이자 엔진 격인 파일을 호출 -->
+		<script src="../gbe.prototype.js"></script><!-- 게임 실행에 필요한 시스템이자 엔진 격인 파일을 호출 -->
 		
-		<script src="js/model.js"></script>
-		<script src="js/view.js"></script>
-		<script src="js/content.js"></script>
+		<script src="js/model.js"></script><!-- 데이터 관리 (데이터 추가 및 갱신, 삭제 등) -->
+		<script src="js/view.js"></script><!-- 뷰 관리 (빌딩 쌓아올리기 등을 직접 보여줌) -->
+		<script src="js/controller.js"></script><!-- 이벤트 관리 (클릭 발생 시 아이템 값에 따른 호출) -->
 	</head>
 	<body>
+		<div class="back" id="back">
+			<div class="back-wrap" id="back-start">
+				<p class="back-title">GridBoardEngine.js - CityBuilder Game</p>
+				<div class="back-content">
+					<div class="select">
+						<div class="select-s">
+							<div class="select-c">
+								City Name:
+								<input type="text" id="cityName" value="Stockholm" size="20" required>
+							</div>
+							<div class="select-c">
+								<label>
+									<button class="btn-mn" onclick="randomNamingCity();">Random Country <i class="fas fa-random" aria-hidden="true"></i></button>
+								</label>
+							</div>
+						</div>
+						<div class="select-s">
+							<div class="select-c">
+								<button class="btn-sz" onclick="selectSize(1);">Small</button><!-- 20x20 -->
+								<button class="btn-sz" onclick="selectSize(2);">Middle</button><!-- 40x40 -->
+								<button class="btn-sz" onclick="selectSize(3);">Large</button><!-- 80x80 -->
+							</div>
+							<div class="select-c">
+								<label>Width: <input type="number" id="width" value="20" min="10" max="80" required></label>
+								<label>Height: <input type="number" id="height" value="20" min="10" max="80" required></label>
+							</div>
+						</div>
+						<div class="select-s">
+							<div class="select-c">
+								<button class="btn-mn" onclick="">Help</button>
+							</div>
+							<div class="select-c">
+								<label>
+									<button class="btn-mn" onclick="">Reset <i class="fas fa-redo-alt" aria-hidden="true"></i></button>
+									<button class="btn-st" onclick="">Start!</button>
+								</label>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="back-wrap" id="back-end">
+				<p class="back-title">We are Asgard!</p>
+				<div class="back-content">
+					Bye, Thanos!
+				</div>
+			</div>
+		</div>
 		<div class="wrap">
 			<div class="top-h">
 				<div class="h-logo">
 					<a href="index.html"><span id="h-logo">GBE City Game</span></a>
 				</div>
 				<div class="h-nav">
-					<button class="h-nav-btn">Menu</button>
-					<ul class="h-navi">
-						<li>Reset</li>
-						<li>Save and Download</li>
-						<li></li>
-						<li>Exit</li>
-					</ul>
+					<button class="h-nav-btn" onclick="refresh();">Reset</button>
+					<button class="h-nav-btn" onclick="saveDownload();">Save and Download</button>
+					<button class="h-nav-btn" onclick="back();">Back</button>
+					<button class="h-nav-btn" onclick="forward();">Forword</button>
+					<button class="h-nav-btn" onclick="exit();">Exit</button>
 				</div>
 			</div>
 			
 			<div class="content-wrap">
-				<div class="content">
-					<div class="cell-map">
+				<div class="content" id="content">
+					<div class="cell-map" id="map">
 						<div class="cell-row">
-							<div class="cell">78</div>
-							<div class="cell">79</div>
-							<div class="cell">80</div>
-							<div class="cell">81</div>
+							<div class="cell" id="c0000">
+								<div class="cell-tile"><img src="image/item/R7.png"></div>
+							</div>
+							<div class="cell" id="c0100">
+								<div class="cell-tile"><img src="image/item/RE.png"></div>
+							</div>
+							<div class="cell" id="c0200">
+								<div class="cell-tile"><img src="image/item/RE.png"></div>
+							</div>
+							<div class="cell" id="c0300">
+								<div class="cell-tile"><img src="image/item/R8.png"></div>
+							</div>
 						</div>
 						<div class="cell-row">
-							<div class="cell">82</div>
-							<div class="cell">83</div>
-							<div class="cell">84</div>
-							<div class="cell">85</div>
+							<div class="cell" id="c0001">
+								<div class="cell-tile"><img src="image/item/RF.png"></div>
+							</div>
+							<div class="cell" id="c0101">
+								<div class="cell-tile"><img src="image/item/R7.png"></div>
+							</div>
+							<div class="cell" id="c0201">
+								<div class="cell-tile"><img src="image/item/RE.png"></div>
+							</div>
+							<div class="cell" id="c0301">
+								<div class="cell-tile"><img src="image/item/R5.png"></div>
+							</div>
 						</div>
 						<div class="cell-row">
-							<div class="cell">86</div>
-							<div class="cell">87</div>
-							<div class="cell">88</div>
-							<div class="cell">89</div>
+							<div class="cell" id="c0002">
+								<div class="cell-tile"><img src="image/item/RF.png"></div>
+							</div>
+							<div class="cell" id="c0102">
+								<div class="cell-tile"><img src="image/item/R6.png"></div>
+							</div>
+							<div class="cell" id="c0202">
+								<div class="cell-tile"><img src="image/item/RE.png"></div>
+							</div>
+							<div class="cell" id="c0302">
+								<div class="cell-tile"><img src="image/item/R8.png"></div>
+							</div>
 						</div>
 						<div class="cell-row">
-							<div class="cell">90</div>
-							<div class="cell">91</div>
-							<div class="cell">92</div>
-							<div class="cell">93</div>
+							<div class="cell" id="c0003">
+								<div class="cell-tile"><img src="image/item/R6.png"></div>
+							</div>
+							<div class="cell" id="c0103">
+								<div class="cell-tile"><img src="image/item/RE.png"></div>
+							</div>
+							<div class="cell" id="c0203">
+								<div class="cell-tile"><img src="image/item/RE.png"></div>
+							</div>
+							<div class="cell" id="c0303">
+								<div class="cell-tile"><img src="image/item/R5.png"></div>
+							</div>
 						</div>
 					</div>
+					<!-- Cell Map is NOT Equals to Item Map -->
+					<!--
+					<div class="item-map">
+						<div class="item-row">
+							<div class="item"></div>
+							<div class="item"></div>
+							<div class="item"></div>
+							<div class="item"></div>
+						</div>
+						<div class="item-row">
+							<div class="item"><img src="image/green_cell.png"></div>
+							<div class="item"><img src="image/bt5.png"></div>
+							<div class="item"><img src="image/green_cell.png"></div>
+							<div class="item"><img src="image/bt5.png"></div>
+						</div>
+						<div class="item-row">
+							<div class="item"><img src="image/green_cell.png"></div>
+							<div class="item"><img src="image/green_cell.png"></div>
+							<div class="item"><img src="image/green_cell.png"></div>
+							<div class="item"><img src="image/green_cell.png"></div>
+						</div>
+						<div class="item-row">
+							<div class="item"></div>
+							<div class="item"></div>
+							<div class="item"></div>
+							<div class="item"></div>
+						</div>
+					</div>
+					-->
 				</div>
 				
 			</div>
@@ -77,5 +187,13 @@
 				</div>
 			</div>
 		</div>
+		<div class="front" id="front">
+			<div class="front-wrap" id="front-"></div>
+		</div>
 	</body>
+	<script>
+		cityInit();
+//		console.log(cityMap.Warning('Start: You NEED Have a Develop it that city game for YOU'));
+//		console.log(zBoard.Log('Start: CityGame'));
+	</script>
 </html>
