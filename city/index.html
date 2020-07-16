@@ -16,7 +16,7 @@
 		<script src="js/view.js"></script><!-- 뷰 관리 (빌딩 쌓아올리기 등을 직접 보여줌) -->
 		<script src="js/controller.js"></script><!-- 이벤트 관리 (클릭 발생 시 아이템 값에 따른 호출) -->
 	</head>
-	<body>
+	<body ondragstart="return false">
 		<div class="back" id="back">
 			<div class="back-wrap" id="back-start">
 				<p class="back-title">GridBoardEngine.js - CityBuilder Game</p>
@@ -83,17 +83,17 @@
 				<div class="content" id="content">
 					<div class="cell-map" id="map">
 						<div class="cell-row">
-							<div class="cell" id="c0000">
-								<div class="cell-tile"><img src="image/item/R7.png"></div>
+							<div class="cell">
+								<div class="cell-tile"><img src="image/item/R7.png" id="c0000"></div>
 							</div>
-							<div class="cell" id="c0100">
-								<div class="cell-tile"><img src="image/item/RE.png"></div>
+							<div class="cell">
+								<div class="cell-tile"><img src="image/item/RE.png" id="c0100"></div>
 							</div>
-							<div class="cell" id="c0200">
-								<div class="cell-tile"><img src="image/item/RE.png"></div>
+							<div class="cell">
+								<div class="cell-tile"><img src="image/item/RE.png" id="c0200"></div>
 							</div>
-							<div class="cell" id="c0300">
-								<div class="cell-tile"><img src="image/item/R8.png"></div>
+							<div class="cell">
+								<div class="cell-tile"><img src="image/item/R8.png" id="c0300"></div>
 							</div>
 						</div>
 						<div class="cell-row">
@@ -139,51 +139,76 @@
 							</div>
 						</div>
 					</div>
-					<!-- Cell Map is NOT Equals to Item Map -->
-					<!--
-					<div class="item-map">
-						<div class="item-row">
-							<div class="item"></div>
-							<div class="item"></div>
-							<div class="item"></div>
-							<div class="item"></div>
-						</div>
-						<div class="item-row">
-							<div class="item"><img src="image/green_cell.png"></div>
-							<div class="item"><img src="image/bt5.png"></div>
-							<div class="item"><img src="image/green_cell.png"></div>
-							<div class="item"><img src="image/bt5.png"></div>
-						</div>
-						<div class="item-row">
-							<div class="item"><img src="image/green_cell.png"></div>
-							<div class="item"><img src="image/green_cell.png"></div>
-							<div class="item"><img src="image/green_cell.png"></div>
-							<div class="item"><img src="image/green_cell.png"></div>
-						</div>
-						<div class="item-row">
-							<div class="item"></div>
-							<div class="item"></div>
-							<div class="item"></div>
-							<div class="item"></div>
-						</div>
-					</div>
-					-->
 				</div>
-				
 			</div>
 			
 			<div class="side-nav">
 				<ul class="side-navi">
-					<li></li>
-					<li></li>
-					<li></li>
-					<li></li>
-					<li></li>
-					<li></li>
-					<li></li>
+					<li>
+						<img src="image/menu/residency.png">
+						<ul class="side-subnavi">
+<!--
+							<li onclick="setItemCode('rh1');"><img src="image/menu/sub/" alt="Red House"></li>
+							<li onclick="setItemCode('rh2');"><img src="image/menu/sub/" alt="Blue House"></li>
+							<li onclick="setItemCode('rh3');"><img src="image/menu/sub/" alt="Green House"></li>
+							<li onclick="setItemCode('rh4');"><img src="image/menu/sub/" alt="F2 House"></li>
+							<li onclick="setItemCode('rh5');"><img src="image/menu/sub/" alt="Rich House"></li>
+							<li onclick="setItemCode('rh6');"><img src="image/menu/sub/" alt="Parasite House"></li>
+-->
+						</ul>
+					</li>
+					<li>
+						<img src="image/menu/building.png">
+						<ul class="side-subnavi">
+							<li onclick="setItemCode('BZ');"><img src="image/menu/sub/" alt="H Building"></li>
+<!--							<li onclick="setItemCode('BG');"><img src="image/menu/sub/" alt="Green Factory"></li>-->
+							<li onclick="setItemCode('BWTC1');"><img src="image/menu/sub/" alt="WTC1"></li>
+						</ul>
+					</li>
+					<li>
+						<img src="image/menu/industry.png">
+						<ul class="side-subnavi">
+<!--
+							<li onclick="setItemCode('');"><img src="image/menu/sub/"></li>
+							<li onclick="setItemCode('');"><img src="image/menu/sub/"></li>
+-->
+						</ul>
+					</li>
+					<li>
+						<img src="image/menu/public.png">
+						<ul class="side-subnavi">
+<!--
+							<li onclick="setItemCode('');"><img src="image/menu/sub/"></li>
+							<li onclick="setItemCode('');"><img src="image/menu/sub/"></li>
+-->
+						</ul>
+					</li>
+					<li>
+						<img src="image/menu/park.png">
+						<ul class="side-subnavi">
+<!--
+							<li onclick="setItemCode('');"><img src="image/menu/sub/"></li>
+							<li onclick="setItemCode('');"><img src="image/menu/sub/"></li>
+-->
+						</ul>
+					</li>
+					<li>
+						<img src="image/menu/road.png">
+						<ul class="side-subnavi">
+							<li onclick="setItemCode('R');"><img src="image/menu/sub/" alt="Road"></li>
+<!--							<li onclick="setItemCode('');"><img src="image/menu/sub/"></li>-->
+						</ul>
+					</li>
+					<li>
+						<img src="image/menu/destroy.png">
+						<ul class="side-subnavi">
+							<li onclick="setItemCode('gp');"><img src="image/menu/sub/" alt="Green"></li>
+							<li onclick="setItemCode('gs');"><img src="image/menu/sub/" alt="Water"></li>
+						</ul>
+					</li>
 				</ul>
 				<div class="side-map-wrap">
-					<div class="side-map"></div>
+					<div class="side-map">MAP</div>
 				</div>
 			</div>
 		</div>
@@ -193,7 +218,7 @@
 	</body>
 	<script>
 		cityInit();
-//		console.log(cityMap.Warning('Start: You NEED Have a Develop it that city game for YOU'));
-//		console.log(zBoard.Log('Start: CityGame'));
+		console.log(cityMap.Warning('Start: You NEED Have a Develop it that city game for YOU'));
+		console.log(zBoard.Log('Start: CityGame'));
 	</script>
 </html>

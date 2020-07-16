@@ -10,6 +10,10 @@
 ol, ul {
 	list-style:none;
 }
+/* Drag Blue hide */
+::selection{
+	background:rgba(0,0,0,0);
+}
 
 .wrap{
 	display:block;
@@ -34,10 +38,13 @@ ol, ul {
 	
 }
 #h-logo {
-	
+	font-size:1rem;
 }
 .h-nav {
-	
+	position:fixed;
+	left:0;
+	bottom:0;
+	width:100%;
 }
 .h-nav-btn {
 	
@@ -84,8 +91,19 @@ ol, ul {
 	background:#FFF;
 }
 .cell-tile>img {
-	position:relative;
+	position:absolute;
+	right:0;
+	bottom:0;
 	box-sizing:border-box;
+}
+.cell-tile>svg{
+	position:fixed;
+	right:0;
+	bottom:0;
+	width:100%;
+	height:100%;
+	box-sizing:border-box;
+	z-index:100;
 }
 
 .side-nav{
@@ -95,12 +113,36 @@ ol, ul {
 	width:10%;
 	height:100%;
 	background:#FFF;
+	box-shadow:0px 0px 10px #000;
+	z-index:10;
 }
 .side-navi{
-	
+	margin-top:1rem;
 }
 .side-navi>li{
+	position:relative;
+}
+.side-navi>li>img{
 	
+}
+.side-subnavi{
+	display:none;
+	position:absolute;
+	top:0;
+	right:0;
+	width:100%;
+	background:#FFF;
+	transform:translate(-100%,0%);
+	z-index:1;
+}
+.side-subnavi>li{
+	
+}
+.side-subnavi>li>img{
+	
+}
+.side-navi>li:hover .side-subnavi{
+	display:block;
 }
 .side-map-wrap{
 	

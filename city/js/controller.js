@@ -32,6 +32,7 @@
 전체 '+' 연결: 9	// 수로에서는 그냥 바다임
 */
 
+// 이거는 그냥 아이템의 목록일 뿐, 실제로 사용할 수 있는 것은 아니다.
 var buildingList = {
 	"empty": 0,
 	"road": [
@@ -153,20 +154,29 @@ var buildingList = {
 		"park2": "gp2",
 		"": "",
 	},
-	"": {
-		"": "",
+	"ground": {
+		"zero": "gz",
+		"none": "nn"
 	},
 	"": {
 		"": "",
 	}
 }
 
-//var example = buildingList.road[1].R1;
-//console.log(example);
+function getBuildingList() {
+	return buildingList;
+}
 
-var item = 0;	// 현재 아이템 코드 (빌딩을 지을 때 가장 최근에 눌렀던 아이템의 코드를 저장하는 것이다)
+var itemCode = 'gp';	// 현재 아이템 코드 (빌딩을 지을 때 가장 최근에 눌렀던 아이템의 코드를 저장하는 것이다)
 
+function getItemCode() {
+	return itemCode;
+}
 
+function setItemCode(code) {
+	itemCode = code;
+	console.log(code);
+}
 
 
 
@@ -222,14 +232,14 @@ function selectSize(lv) {
 function cellClickActive(e) {
 	if (e.target !== e.currentTarget) {
 		var cell = e.target.id;
-		
-		console.log('Click ('+x+','+y+') e.button: '+e.button);
+//		console.log('Click!');
 		
 		// 앞에 c가 붙지 않은 아이디 값을 걸러낸다. (좌표 아이디는 c로 시작한다.)
 		if (cell.charAt(0) == 'c') {
 			// 아이디 값을 좌표값으로 전환.
 			var at = convertCoordinateValues(cell);
 			var x = Math.abs(at.x), y = Math.abs(at.y);
+//			console.log('Click ('+x+','+y+'), id:('+ cell +'), e.button: '+e.button);
 			
 			// 마우스 우클릭, 좌클릭에 따라 구분
 			if (e.button == 0) clickLeft(x,y);	// 좌클릭
@@ -242,8 +252,8 @@ function cellClickActive(e) {
 
 // 아이디 값을 좌표값으로 바꿔준다.
 function convertCoordinateValues(id) {
-	var x = parseInt(id.substr(0,2));
-	var y = parseInt(id.substr(2,2));
+	var x = parseInt(id.substr(1,2));
+	var y = parseInt(id.substr(3,2));
 	
 	return {x: x, y: y};
 }
@@ -254,15 +264,42 @@ function eventListenerSet() {
 }
 
 function clickLeft(x,y) {
-	
+	var itemCode = getItemCode();
+	if (itemCode == 'R') {
+		makeRoad(x,y);
+		return;
+	}
+	setSite(x, y, itemCode);
+	console.log(x,y);
 }
 function clickRight(x,y) {
 	
 }
 
+// 클릭을 통해 클릭된 이미지를 바꾸는 작업을 한다.
+
+// 일단 이미지에서 여러개의 셀 병합은 다음 버전 아니 빌표 끝나고 계속해서 업데이트할 때 나올 것이다.
+
+// 빌딩을 올리는 작업을 CSS에서 해결할 수 있는 방법을 빨리 찾아본다.
+// 이미지에 의해 빌딩이 세워지면 타일 클릭에 문자가 발생할 것이다.
+// 타일은 아래의 타일 기준으로 하는데, 클릭 감지를 이미지 값으로 받으므로 심각한 오류를 야기할 수 있다.
+// TODO: 이 점을 빨리 바꾸어라
 
 
-
+function keySelector() {
+	var arr = [];
+	var result = 0;
+	
+	for (var i = 0; i < arr.length + 1; i++) {
+		for (var j = 0; j < arr.length; j++) {
+			if (arr[j] == result) {
+				break;
+			}
+		}
+		result++;
+	}
+	return result;
+}
 
 
 

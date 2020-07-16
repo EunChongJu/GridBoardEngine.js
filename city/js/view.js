@@ -111,9 +111,10 @@ function makeUpMap(w,h) {
 		for (var i = 0; i < w; i++) {
 			var x = fitToNumUnit(i, 2);
 			var y = fitToNumUnit(j, 2);
+//			var item = 'gs';
 			var item = 'gp';
-			code += '<div class="cell" id="c'+ x + y +'">';
-			code += '<div class="cell-tile"><img src="image/item/'+ item +'.png"></div></div>';
+			code += '<div class="cell"><div class="cell-tile">'
+			code += '<img src="image/item/'+ item +'.png" id="c'+ x + y +'"></div></div>';
 		}
 		code += '</div>';
 	}
@@ -126,6 +127,17 @@ function fitToNumUnit(i, n) {
 	return str.slice(-n);
 }
 
+// 문제가 발생했다. 투명한 영역을 하나의 이미지로 처리되는 문제로, PNG를 SVG로 대체 시도했으나 실패했다. 새로운 방안을 찾아라.
+// <img>로 SVG를 가져오지 말고 직접 SVG를 이식하고 필요할 때마다 그 SVG를 교체하면 되지 않을까?
+// ㅅㅂ svg를 띄우면 되긴 되는데 지하로 내려간다 해결 불능인듯
+
+function changeSite(x,y,d) {
+	var ix = fitToNumUnit(x, 2);
+	var iy = fitToNumUnit(y, 2);
+	var id = 'c' + ix + iy;
+	
+	document.getElementById(id).src = 'image/item/'+d+'.png';
+}
 
 
 
