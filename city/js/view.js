@@ -1,4 +1,13 @@
+//// ::VIEW:: ////
+// Input 텍스트, 체크박스 항목 등과 같은 사용자 인터페이스 요소를 나타낸다.
+// 데이터 및 객체의 입력 그리고 보여주는 출력을 담당
+// 데이터를 기반으로 사용자들이 볼 수 있는 화면
 
+// 모델이 가지고 있는 정보를 따로 저장해서는 안된다.
+// 모델이나 컨트롤러와 같이 다른 구성 요소들을 몰라야 한다.
+// 뷰는 데이터를 받으면 화면에 표시해주는 역할을 가진다.
+// 변경이 일어나면 변경 통지에 대한 처리 방법을 구현해야 한다.
+// 재사용 가능하게끔 설계를 해야 하며 다른 정보들을 표현할 때 쉽게 설계를 해야 한다.
 
 
 function hideFront() {
@@ -114,7 +123,8 @@ function makeUpMap(w,h) {
 //			var item = 'gs';
 			var item = 'gp';
 			code += '<div class="cell"><div class="cell-tile">'
-			code += '<img src="image/item/'+ item +'.png" id="c'+ x + y +'"></div></div>';
+//			code += '<img src="image/item/'+ item +'.png" id="c'+ x + y +'"></div></div>';
+			code += '' + item +' : '+ x + y +'</div></div>';
 		}
 		code += '</div>';
 	}

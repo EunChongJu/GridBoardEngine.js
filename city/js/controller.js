@@ -1,199 +1,75 @@
+//// ::CONTROLLER:: ////
+// 데이터와 사용자 인터페이스 요소들을 잇는 다리 역할
+// 사용자가 데이터를 클릭하고 수정하는 것에 대한 이벤트들을 처리하는 부분
+
+// 모델이나 뷰에 대해서 알고 있어야 한다.
+// 모델이나 뷰의 변경을 모니터링 해야 한다.
+// 애플리케이션의 메인 로직은 컨트롤러가 담당한다.
 
 
-
-
-//// 지을 수 있는 모든 아이템의 목록
-
-// + 도로 등 시스템에 사용되는 것을 구분하기 위해 다음과 같은 사항을 추가한다.
-// <ㅓ>로 되있으면 이것을 눕힐 때 오른쪽 아래만 연결이 안되있고, <ㅏ>는 왼쪽 위쪽만 연결 안된 것이다.
-
-// 도로나 운하, 빌딩 등을 모두 관리할 때 필요한 모든 것을 리스트로 정리한 것이다.
-// 아래는 도로의 경우 연결 할 수 있는 경우의 수를 따져봤을 때, 가능한 목록을 정리한 것이다.
-// 본 아이템 코드는 16진수를 사용한다.
-/*
-원점: 0
-서쪽 단일 연결: 1
-북쪽 단일 연결: 2
-동쪽 단일 연결: 3
-남쪽 단일 연결: 4
-
-서쪽 북쪽 연결: 5
-북쪽 동쪽 연결: 6
-동쪽 남쪽 연결: 7
-남쪽 서쪽 연결: 8
-
-서쪽 'ㅓ' 연결: A
-북쪽 'ㅗ' 연결: B
-동쪽 'ㅏ' 연결: C
-남쪽 'ㅜ' 연결: D
-
-동서 직렬 연결: E
-남북 직렬 연결: F
-전체 '+' 연결: 9	// 수로에서는 그냥 바다임
-*/
-
-// 이거는 그냥 아이템의 목록일 뿐, 실제로 사용할 수 있는 것은 아니다.
-var buildingList = {
-	"empty": 0,
-	"road": [
-		"R",
-		{
-			"R1": "R1",
-			"R2": "R2",
-			"R3": "R3",
-			"R4": "R4",
-			"R5": "R5",
-			"R6": "R6",
-			"R7": "R7",
-			"R8": "R8",
-			"R9": "R9",
-			"RA": "RA",
-			"RB": "RB",
-			"RC": "RC",
-			"RD": "RD",
-			"RE": "RE",
-			"RF": "RF"
-		}
-	],
-	"canal": [	// CHANNEL OR CANAL
-		"C",
-		{
-			"C1": "C1",
-			"C2": "C2",
-			"C3": "C3",
-			"C4": "C4",
-			"C5": "C5",
-			"C6": "C6",
-			"C7": "C7",
-			"C8": "C8",
-			"C9": "C9",
-			"CA": "CA",
-			"CB": "CB",
-			"CC": "CC",
-			"CD": "CD",
-			"CE": "CE",
-			"CF": "CF"
-		}
-	],
-	"highway": [	// AUTOBAN OR HIGHWAY
-		"H",
-		{
-			"H1": "H1",
-			"H2": "H2",
-			"H3": "H3",
-			"H4": "H4",
-			"H5": "H5",
-			"H6": "H6",
-			"H7": "H7",
-			"H8": "H8",
-			"H9": "H9",
-			"HA": "HA",
-			"HB": "HB",
-			"HC": "HC",
-			"HD": "HD",
-			"HE": "HE",
-			"HF": "HF"
-		}
-	],
-	"metro": [	// SUBWAY OR METRO
-		"M",
-		{
-			"M1": "M1",
-			"M2": "M2",
-			"M3": "M3",
-			"M4": "M4",
-			"M5": "M5",
-			"M6": "M6",
-			"M7": "M7",
-			"M8": "M8",
-			"M9": "M9",
-			"MA": "MA",
-			"MB": "MB",
-			"MC": "MC",
-			"MD": "MD",
-			"ME": "ME",
-			"MF": "MF"
-		}
-	],
-	"residency": {
-		"house1": "rh1",
-		"house2": "rh2",
-		"house3": "rh3",
-		"mansion1": "rh4",
-		"mansion2": "rh5",
-		"apartment": "rh6",
-	},
-	"commercial": {
-		"": "",
-		"": "",
-		"": "",
-	},
-	"building": {
-		"": "",
-		"": "",
-		"": "",
-	},
-	"tower": {
-		"": "",
-		"": "",
-		"": "",
-	},
-	"industry": {
-		"": "",
-		"": "",
-		"": "",
-	},
-	"public": {
-		"": "",
-		"": "",
-		"": "",
-	},
-	"park": {
-		"green": "gp",
-		"park1": "gp1",
-		"park2": "gp2",
-		"": "",
-	},
-	"ground": {
-		"zero": "gz",
-		"none": "nn"
-	},
-	"": {
-		"": "",
-	}
+// 맨 처음 호출되는 함수가 바로 여기에 있다.
+function cityInit() {
+	console.log('cityInit Start()');
+	cityMap = new GridBoardEngine();
+	zBoard = new GridBoardEngine();
+	cityStart();
+	eventListenerSet();
 }
 
-function getBuildingList() {
-	return buildingList;
+// 시티맵이나 zBoard를 전체적 총괄적으로 시작하게 하는 함수
+function cityStart() {
+	console.log('cityStart()');
+	newMap();
+	startZ_Board();
+	// 맨 끝에는 디스플레이를 구성하는 view.js의 함수를 호출해야 한다.
 }
 
-var itemCode = 'gp';	// 현재 아이템 코드 (빌딩을 지을 때 가장 최근에 눌렀던 아이템의 코드를 저장하는 것이다)
+//// 시티의 도로나 빌딩 등 지도 구성을 하는 데이터 보드를 저장하고 관리하는 함수 모음
 
-function getItemCode() {
-	return itemCode;
+// 시티의 새로운 맵을 생성
+function newMap() {
+	cityMap.newBoard(10,10);	// 20 x 20
+	cityMap.initAllValues('gs');
+	cityMap.setStartIndex(0);
+	showMap(10,10);
 }
 
-function setItemCode(code) {
-	itemCode = code;
-	console.log(code);
+// 맵의 영역 확장에 의해 맵의 크기가 변경될 때 (영토 확장)
+function resizeMap(x,y) {
+	var process = 0, valid = 0;
+	cityMap.resizeFrame({x: x, y: y, process: process, valid: valid});
+	resetZ_Board();
 }
 
 
 
 
+//// z-index의 값들을 저장하는 보드를 관리하는 함수 모음
 
-
-
-//// GAME START INTO DISPLAY CONTROLLER
-
-function randomNamingCity() {
-	var cityNameList = [
-		'Daegu', 'Seoul', 'Busan', 'Pyeongyang', 'Tokyo', 'Tel\' aviv', 'Jerusalem', 'Athens', 'Berlin', 'Bern', 'Geneva', 'Basel', 'Zürich', 'Moscow', 'London', 'Lisbone', 'Madrid', 'Helsinki', 'Stockholm', 'Rome', 'Nairobi', 'Denver', 'Olso', 'Bogota', 'Rio', 'Marsella', 'Sofia', 'Kiev', 'Kyiv', 'Manila', 'Copenhagen', 'Amsterdam', 'Prague', 'Bratislava', 'Brussels', 'Rotterdam', 'Taipei', 'Vienna', 'Budapest', 'Warsaw', 'Bucharest', 'Kraków', 'Paris', 'Singapore', 'Bangkok', 'Kaosiung', 'Kuala Lumpur', 'Ulaanbaatar', 'Hong Kong', 'Macao', 'Jakarta', 'Sydney', 'New York', 'Washington D.C', 'Toronto', 'Dubai', 'Ottawa', 'Vancouver', 'Ontario', 'Quebec', 'Montreal', 'Seattle', 'Philadelphia', 'Cicago', 'San Francisco', 'Los Angeles', 'Las Vegas', 'Boston', 'Houston', 'Gotham City', 'Tian', 'Straupia', 'Oplandia', 'Serjio', 'Marquina', 'Vefrasinky', 'Jei Cien', 'Suqular', 'Edvardia', 'Xian', 'Anttriol', 'Naver City', 'Doppler', 'Trolling', 'Hexa', 'Enigma', 'Coldwarm', 'Ivory', 'Tax High', 'Yeterbori'
-	];
-	var min = 0, max = cityNameList.length-1;
-	var random = Math.floor(Math.random() * (max - min + 1)) + min; //최댓값도 포함, 최솟값도 포함
-	setCityName(cityNameList[random]);
+// 맵을 새롭게 시작할 때
+function startZ_Board() {
+	zBoard.newBoard(10,10);
+	makeForZBoard();
 }
+
+// z-index 배치를 위해 호출할 때
+function getZ_Board() {
+	return zBoard.getBoard();
+}
+
+// z-index를 사용하기 위한 것인데, 이미지를 사용하면 상대적으로 적은 수의 z-index는 맨 뒤로 가게 된다.
+function makeForZBoard() {
+	var typeNumber = 1;
+	var add = 1;
+	zBoard.setSlashMap(typeNumber,add);
+}
+
+// 영토 확장으로 z-index를 재정비
+function resetZ_Board() {
+	makeForZBoard();
+}
+
+
 
 function selectSize(lv) {
 	if (lv == 1) setSize(20,20);
@@ -203,30 +79,6 @@ function selectSize(lv) {
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-// 게임에서 두가지 보드가 사용되는데, 
-// 한 보드는 건물이나 도로, 강, 다리, 숲 등 어떤 건물이 배치되느냐에 따라 아이템 값이 달라진다.
-// 또 다른 보드는 z-index를 위한 것으로, NW->SE 방향으로 증가하는 슬래시 맵을 형성한다.
-
-
-// z-index를 사용하기 위한 것인데, 이미지를 사용하면 상대적으로 적은 수의 z-index는 맨 뒤로 가게 된다.
-
-
-
-
-
-//// 이번엔 진짜 COLTROLLER.JS임
 
 // 맵 안의 모든 셀을 통틀어 클릭을 감지하는 함수
 function cellClickActive(e) {
