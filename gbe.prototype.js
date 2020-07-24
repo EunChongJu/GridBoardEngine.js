@@ -4,10 +4,14 @@
 board와 기록스택, 프레임 사이즈 등의 데이터를 Grid라는 클래스로 하고,
 이 Grid 클래스를 생성자로 쓰게 되면 이 데이터 형식이 사용 되는 것이고,
 이로써 함수들은 Grid와는 독립적으로 사용할 수 있게 될지도 모른다.
+그리고 board는 2차원 배열로 저장하는 것이 아닌 객체라는 형태로 저장하면 좋을 듯 하다.
+아 또, board에 저장되는 것 자체가 오브젝트이기 때문에
+여기에 board.prototype.~로 함수를 추가하거나 변수를 추가하면
+index 뿐만 아니라 init, frameX, frameY 등을 불필요한 것을 줄일 수 있게 될 것이다.
 */
 
 
-"use strict";	// 엄격모드임
+"use strict";	// 여기서 모든 것은 엄격모드임
 
 // 여기서는 임시로 프로토타입을 만들어서 나중에 클래스로 구현할 것이다.
 var GridBoardEngine = function() {
@@ -17,7 +21,7 @@ var GridBoardEngine = function() {
 	// 처음 인덱스 번호를 0으로 할지 1(true)로 할지 설정. (초기값은 0, false부터 시작한다)
 	this.index = false;
 	
-	// 초기값을 설정하여 이동 등 문제로 인해 아이템이 비워질 때 채우는 용도로 사용됨. (초기값 0)
+	// 초기값을 설정하여 이동이나 삭제 등 문제로 인해 아이템이 비워질 때 채우는 용도로 사용됨. (초기값 0)
 	this.init = 0;
 	
 	// 보드의 가로 칸과 세로 칸의 길이를 저장 : 이를 프레임 사이즈라 한다.
@@ -36,133 +40,188 @@ var GridBoardEngine = function() {
 	this.stackPass = false;
 	
 	// Grid : grid[{ key: value },{...},{...},]
-	this.grid = [];
+	this.grid = [
+		// {a1: 1},					// 이거를 사용하거나
+		// {key: 'a1', value: 1}	// 또는 이거를 사용한다.
+	];
 	
-	// grid key list : 'a1', 'a5', 'a6', ... (그리드 키의 배열은 숫자로 저장된다.)
+	// grid key list : 1, 2, 5, 6, ... (그리드 키의 배열은 숫자로 저장된다.)
 	this.gridKey = [];
 	
+	// Not use key list : (그리드 키의 배열에서 삭제된 키 값(숫자)만 이 배열에 저장된다.)
+	this.recycleGridKey = [];
 	
-	////// Grid Administrate Functions.
 	
-	// 그리드는 셀 합병과 분할, 분리 등을 관여하는 것으로, 키와 값에 의해 저장된다.
-	// 그리드 합병의 원리는 예를 들어 (0,3)과 (0,4)에 같은 값을 가진 키 값이 있다면,
-	// 이 두개의 아이템이 하나의 아이템으로 합병되었다고 간주하여 처리된다.
-	// 셀 합병은 2칸 이상으로 가능하며, 사각형 그리드에 들어간다면 합병이 가능하다.
-	// 합병된 아이템의 값을 저장하고 불러오는 방법은 저장된 키 값을 찾아 해당 값을 불러오거나 변경하는 방법이다.
-	// 단 셀 합병시 많은 제약이 따르는데, 대표적으로 선 긋기와 슬래시 맵을 만드는 메서드를 실행할 수 없다.
+	// So, 내가 생각한 것은 바로 이것인데,
+	// grid Array는 실제 키 이름과 키에 매칭되는 값을 가진다.
+	// gridKey Array는 키 이름만 지닌다.
+	// recycleGridKey Array는 삭제된 키 이름만 저장된다.
+	// recycleGridKey가 존재하는 이유는 키 할당에 있어서 효율적으로 사용하기 위해서이다.
 	
-	// 셀 합병 시 양쪽 값이 모두 동일해야 비교적 안정적으로 합병 성공할 수 있다.
-	// 그러나 양쪽 값이 다른 경우, 다음과 같은 처리 방법이 있다. 번호는 파라미터의 옵션이 된다.
-	// 1. 모든 값을 합치고 나눈 평균값	(3 + 5 = > 4, 2 + 8 = 5)
-	// 2. 문자의 경우 문자를 하나의 값으로 합침	(2 + 4 => 24, A + 3 => A3)
-	// 3. 숫자의 경우 합산한 값	(3 + 5 => 8, 2 + 8 => 10) (값이 무효라면, 이 값을 반환한다)
+	// 키 발급 원리는 다음과 같다.
+	// 맨 처음에 gridKey 존재하지 않을 때, 새로운 발급 값으로 a1가 발급된다.
+	// 그 다음 발급되는 것은 a2이다. 이때 gridKey에 존재하는 키 이름 중 가장 큰 값인 a1보다 큰 수인 a2가 채택된다.
+	// 그렇게 쭉 가면 십자리수, 백자리수든 얼마든지 사용이 가능하게 된다.
+	// 그러나 문제가 하나 있다. 합병하다 취소되거나 분할된 셀 값도 존재한다.
+	// 분할되면, 키 값에 문자가 생긴다. 중간중간에 빠지게되는 키 값이 늘어나고,
+	// 이 상태 그대로 최댓값을 구해서 키 값을 발급한다는 것은 매우 비효율적이다.
+	// 그래서 키 값이 삭제(분할)되면 gridKey에서 삭제되고, 키 값은 recycleGridKey로 저장된다.
+	// 그러면 나중에 키를 새로 발급할 때, recycleGridKey를 불러와 매우 효율적으로 사용할 수 있게 된다.
+	// 즉, recycleGridKey 배열에 아무도 없다면 새로운 키를 발급하고, 있다면 맨처음 것을 사용하면 된다.
+	// 여기서 하나 추가. 삭제되는 키 값이 gridKey 상에서 가장 큰 값이라면 recycleGridKey로 보낼 필요없다.
 	
-	/// 셀 합병 및 분할을 관여하는 함수들
 	
-	// 뭐 또 생각남.
-	// 합병 후 해당되는 셀들 안에 공통된 값을 저장하게 되는데, 만약 합병된 셀들 중 하나의 셀 값을 바꾸게 된다면
-	// 이 값을 바꾸는 것이 아닌 이 키값을 찾아 바꾸어야 한다.
-	// 그리고 합병 후 셀을 다시 분할하는 함수 역시 간단하다.
-	// 그러나 분할 이후의 값은 어떻게 처리하고 지정해야 하는가?
+	//// 셀 합병 및 분할을 관여하는 함수들
 	
 	// 셀 합병 실행
-	this.cellMarger = function(item,opt) {		// 좌표({ax,ay,bx,by})와 옵션
-		var keyName;
-		var margedItemValue = this.cellMargerAdjustValue(item,opt);
+	this.cellMerger = function(item,opt) {	// 좌표({ax,ay,bx,by})와 옵션
+		var mergeItemVal = this.cellMergerAdjustValue(item,opt);
+		var keyName = this.mergedItemValue(mergeItemVal);
 		
-		this.setItem(item.ax, item.ay, keyName);	// 합병 후 공통된 값을 지정하게 됨
-		this.drawRect(item.ax, item.ay, item.bx, item.by);
-		
-		this.margedItemValue(margedItemValue);
-	}
+		this.setItem(item.ax, item.ay, keyName);
+		this.drawRect(item.ax, item.ay, item.bx, item.by);	// 합병 후 공통된 값을 지정하게 됨
+	};
 	
-	// 셀 합병에 있어서 A와 B, 그리고 그 이상의 아이템을 어떻게 합병할 것인지 옵션에 따라 값을 반환한다.
-	this.cellMargerAdjustValue = function(item, opt) {
+	// 셀 합병에 있어서 A와 B, 그리고 그 이상의 아이템을 어떻게 합병할 것인지 옵션에 따라 값을 계산한 후 반환한다.
+	this.cellMergerAdjustValue = function(item, opt) {
 		var itemArr = this.getArrRectA2B(item.ax, item.ay, item.bx, item.by);
-		var adjustedValue;
+		var adjustedValue = itemArr[0];
 		
-		for (var i = 0; i < itemArr.length; i++) adjustedValue += itemArr[i];
+		for (var i = 1; i < itemArr.length; i++) adjustedValue += itemArr[i];
 		
-		if (opt == 1) adjustedValue /= itemArr.length;
+		if (opt == 1) adjustedValue /= itemArr.length;	// 평균값으로 저장. (2와 3번은 모두 합치는 것이라 생략)
 		
 		return adjustedValue;
-	}
+	};
 	
-	// A부터 B까지 안의 네모 안에 있는 값을 배열로 반환
-	this.getArrRectA2B = function(ax,ay,bx,by) {
-		var arr = [];
-		
-		return arr;
-	}
-	
-	// 셀 합병으로 새로운 키가 추가됨
-	this.margedItemValue = function(val) {
+	// 합병으로 새로운 키 값을 발급하고 그리드 키에 추가한다.
+	this.mergedItemValue = function(val) {
 		var keyName = this.gridKeyGeneration();
-		this.pushMargedItem(keyName, val);
-	}
+		this.keyRegistation(keyName, val);
+		return keyName;
+	};
 	
-	this.pushMargedItem = function(key, val) {
-		this.grid.push({ key: '', value: val });
-	}
-	
-	// 셀 합병이 취소되거나 분할됨
-	this.dividedItemValue = function(key) {
-		var keyName = ((key.substr(0,1) == 'a') ? key : 'a' + key);
-		
-		// 분할될 키 값이 일치하는 것을 찾아 없앤다.
-		this.removeGridKey(keyName);
-	}
-	
-	// 그리드 키 값에 없는 가능한 키 값을 찾는다.
-
-	// 여기서 발생하는 문제에 대처하는 방법을 나열해본다.
-	/*
-	먼저 키 값에 다음과 같은 배열이 있다.
-	[1,2,3]
-
-	그러나 a2라는 키 값이 분할(분리)되면서 2가 제거된다.
-	[1,3]
-
-	그리고 다시 새로운 키 값이 추가된다.
-	여기서 1을 먼저 탐색하고 있음을 확인하면 키 값을 증가시킨다.
-	증가하면 2가 된다. 2를 탐색한다. 그리고 걀과로 2가 없음을 확인한다.
-
-	2가 추가된다.
-	[1,3,2]
-
-	그 다음에 새로운 키가 추가되면 모두 탐색하여 없는 수가 4임을 확인하고, 추가한다.
-	[1,3,2,4]
-	*/
-	
-	// 키 값을 생성해주는 함수
+	// 키 값을 생성해주는 함수 (recycleGridKey에 키가 존재한다면 이것부터 재활용하고, 없으면 새로 발급한다)
 	this.gridKeyGeneration = function() {
 		var keyNumber = 1;
 		
-		if (!this.gridIsEmpty()) {
-			// for문에서 key 값에 중복되지 않는 최솟값을 구할려고 했으나 복잡해서 그냥 최댓값으로 구한다.
+		// 삭제된 키 값이 비어있는지 확인.
+		if (this.recycleGridKeyIsEmpty()) {	// 비어있다면, gridKey 중 최댓값을 찾는다.
 			for (var i = 0; i < this.gridKey.length; i++) {
-				if (this.gridKey[i] >= keyNumber) keyNumber = this.gridKey[i] + 1;
+				var gridKeyAer = this.gridKey[i].key;
+				var gridKeyAx = this.keyNameToNum(gridKeyAer);
+				if (gridKeyAx >= keyNumber) {
+					keyNumber = gridKeyAx + 1;
+				}
 			}
 		}
-		
-		var keyName = 'a' + keyNumber;
-		this.gridKey.push(keyNumber);
-		
-		return keyName;
-	}
-	
-	// 분할됨으로 사라지게 될 그리드의 키를 제거.
-	this.removeGridKey = function(key) {
-		for (var i = 0; i < this.gridKey.length; i++) {
-			if (this.gridKey[i] == key) this.gridKey.splice(i,1);
+		else {	// 존재한다면, 삭제된 키 값을 사용한다.
+//			keyNumber = this.keyNameToNum(this.recycleGridKey.shift().key);	// 반환값은 숫자임.
+			var rec = this.recycleGridKey.shift();
+			keyNumber = this.keyNameToNum(this.keyNameToNum(rec));
 		}
-	}
+		
+		return this.keyNumToName(keyNumber);
+	};
 	
-	// 그리드가 비었는지 확인. (그리드가 비었어요? 네! 비었어요 true, 아니요 안비었는데요? false)
-	this.gridIsEmpty = function() {
+	
+	
+	// 셀 분할 실행
+	this.cellDivide = function(key,opt) {	// 키 값과 옵션
+		var keyName = ((key.substr(0,1) == 'a') ? key : 'a' + key);
+		
+		// 각각의 셀이 옵션에 따라 분할되며, 값이 저장됩니다.
+		this.dispartCell(key,opt);
+		
+		// 분할될 키를 등록 해제한다.
+		this.keyUnregistation(keyName);
+	};
+	
+	// 분할되는 해방 합병 셀을 찾아 옵션에 따라 처리함
+	this.dispartCell = function(key,opt) {
+		// 저거 생각보다 어려운데
+		// 일단 다른거 오류사항이 많은거부터 해결하고
+		// 아윌컴백
+	};
+	
+	// 키를 등록한다.
+	this.keyRegistation = function(key,val) {
+		this.grid.push({ key: key, value: val });
+	};
+	
+	// 키를 등록 해제한다.
+	this.keyUnregistation = function(key) {
+		key = this.convertGridKey(key);
+		for (var i = 0; i < this.gridKey.length; i++) {
+			if (this.gridKey[i].key == key) this.recycleGridKey = this.gridKey.splice(i,1);
+		}	// 등록이 해제됨으로써 해당 키는 recycleGridKey로 이동한다.
+	};
+	
+	// 그리드 키 배열이 비었는지 확인. (그리드가 비었어요? 네! 비었어요 true, 아니요 안비었는데요? false)
+	this.gridKeyIsEmpty = function() {
 		return this.grid.length == 0;
-	}
+	};
 	
+	// recycleGridKey 배열이 비었는지 확인
+	this.recycleGridKeyIsEmpty = function() {
+		return this.recycleGridKey.length == 0;
+	};
+	
+	// 그리드 키 값이 유효한 값인지 확인한다.
+	this.validGridKey = function(key) {
+		key = this.convertGridKey(key);
+		for (var i = 0; i < this.gridKey.length; i++) {
+			if (this.gridKey[i].key == key) return false;
+		}
+		return true;
+	};
+	
+	// 그리드 분할 전에 키 값을 문자열로 받으면 숫자로 변환해준다.
+	this.convertGridKey = function(key) {
+		return (typeof key == "string") ? parseInt(key.substring(1)) : key;
+	};
+	
+	// 그리드 키 값 조회
+	this.callGridKey = function(key) {
+		for (var i = 0; i < this.gridKey.length; i++) {
+			if (this.gridKey[i].key == key) return this.gridKey[i].value;
+		}
+	};
+	
+	// 그리드 키 값 수정
+	this.updateGridKey = function(key,val) {
+		for (var i = 0; i < this.gridKey.length; i++) {
+			if (this.gridKey[i].key == key) this.gridKey[i].value = val;
+		}
+	};
+	
+	// 키 값 중에서 제일 큰 값을 구할 수 있도록 키 값을 숫자로 변환해줌
+	this.keyNameToNum = function(key) {
+		return parseInt(key.split('a')[1]);
+	};
+	// 숫자형 키 값을 문자열로 변환해줌
+	this.keyNumToName = function(keyNum) {
+		return 'a' + keyNum;
+	};
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	// A부터 B까지 안의 네모 안에 있는 값을 배열로 반환
+	this.getArrRectA2B = function(ax,ay,bx,by) {	// A와 B가 순서가 뒤틀렸을 수도 있음을 인지해야 함.
+		var arr = [];
+		// A부터 B까지 사각형 안의 값을 배열에 저장한다.
+		for (var y = ay; y < by + 1; y++) {
+			for (var x = ax; x < bx + 1; x++) arr.push(this.getItem(x,y));
+		}
+		return arr;
+	};
 	
 	
 	
@@ -170,7 +229,7 @@ var GridBoardEngine = function() {
 	///// GridBoardEngine Common(?) Functions.
 	
 	// GridBoardEngine Version
-	this.version = function() { return "1.5.2"; }
+	this.version = function() { return "1.5.2"; };
 	
 	
 	// 처음 시작할 때 호출하는 함수. 시작 인덱스, 초기값, 프레임 사이즈 제한하는 크기 등을 한꺼번에 설정함. (사용안해도 됨)
@@ -306,7 +365,7 @@ var GridBoardEngine = function() {
 					"index": {"x": 0, "y": 0},
 					"data": {
 						"data": 1,	// data - check type under data.
-						"type": 1	// int=1, string=3, null=0, undefined=4, object=5, margeItem=2
+						"type": 1	// int=1, string=3, null=0, undefined=4, object=5, mergeItem=2
 					}
 				},
 				{
@@ -591,9 +650,9 @@ var GridBoardEngine = function() {
 	
 	// Return to Data Type Number for PortDataset
 	this.portDataTypeSet = function(data) {
-		var type = (typeof data);	// int=1, string=3, null=0, undefined=4, object=5, margeItem=2
+		var type = (typeof data);	// int=1, string=3, null=0, undefined=4, object=5, mergeItem=2
 		if (type == "number") return 1;
-		else if (type == "string") return 3;	// 2는 margedItem의 값이라 margedItem을 넣으면 문자열을 반환
+		else if (type == "string") return 3;	// 2는 mergedItem의 값이라 mergedItem을 넣으면 문자열을 반환
 		else if (type == "undefined") return 4;
 		else if (type == "object") return 5;	// null을 object로 인식하기도 함
 		else if (type == "boolean") return 6;
@@ -901,19 +960,69 @@ var GridBoardEngine = function() {
 	// 탐색 함수 하나로 모든 것을 구현할 수 있다. 
 	// indexOf같으면 함수 내에 작성하여 처음 발견되는 일치하는 값의 인덱스를 반환하고 종료시키면 되는 것이다!
 	
-	// TODO: 반복되는 부수적인 요소를 줄이기 위한 함수 작성하기
-	this.boardEach = function(func) {
+	this.map = function(list, interatee) {
+		var new_list = [];
+		for (var i = 0; i < list.length; i++) {
+			new_list.push(interatee(list[i], i, list));
+		}
+		return new_list;
+	};
+	
+	this.filter = function(list, predicate) {
+		var new_list = [];
+		for (var i = 0; i < list.length; i++) {
+			if (predicate(list[i], i, list)) new_list.push(list[i]);
+		}
+		return new_list;
+	};
+	
+	this.find = function(list, predicate) {
+		for (var i = 0; i < list.length; i++) {
+			if (predicate(list[i], i, list)) return list[i];
+		}
+	};
+	
+	this.findIndex = function(list, predicate) {
+		for (var i = 0; i < list.length; i++) {
+			if (predicate(list[i], i, list)) return i;
+		}
+	};
+	
+	this.identity = function(v) {
+		return v;
+	};
+	
+	this.falsy = function(v) {
+		return !v;
+	};
+	
+	this.truthy = function(v) {
+		return !!v;
+	};
+	
+	this.some = function(list) {	// 배열에 하나라도 긍정적인 값이 있다면 true를 반환
+		return !!_.find(list, _.identity);
+	};
+	
+	this.every = function(list) {	// 모두 긍정적인 값이어야 true를 반환
+		return _.filter(list, _.identity).length == list.length;
+	};
+	
+	
+	// TODO: 반복되는 부수적인 요소를 줄이기 위한 함수 작성하기 (Func.js에서 map()과 같다)
+	this.boardEach = function(internatee) {
+		var newList = [];
 		for (var y of this.board) {
 			for (var x of this.board[y]) {
-				func();
-				var dx = x, dy = y;
+				newList.push(internatee(this.getIndexItem(x,y)));
 			}
 		}
+		return newList;
 	}
 	
 	// TODO: 이 값을 찾아 맨 처음의 값의 인덱스를 반환 (없으면 undefine)
 	this.indexOf = function(val) {
-		var arr = new Array();
+		var arr = [];
 		
 		for (var y of this.board) {
 			for (var x of this.board[y]) {
@@ -936,7 +1045,7 @@ var GridBoardEngine = function() {
 	
 	// TODO: 주어진 값을 모두 찾아 배열로 반환. (없으면 undefine)
 	this.findAll = function(val) {
-		var arr = new Array();
+		var arr = [];
 		
 		for (var y of this.board) {
 			for (var x of this.board[y]) {
@@ -949,8 +1058,8 @@ var GridBoardEngine = function() {
 	};
 	
 	// TODO: 주어진 값을 모두 찾아 인덱스 배열로 반환. (없으면 undefine)
-	this.findIndexAll = function(val) {
-		var arr = new Array();
+	this.findIndexAll = function(opt) {
+		var arr = [];
 		
 		for (var y of this.board) {
 			for (var x of this.board[y]) {
