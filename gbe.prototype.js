@@ -39,11 +39,10 @@ var GridBoardEngine = function() {
 	// 스택 패스 상태를 저장 (true면 스택 패스 모드 상태임, export할 때 이 모드가 false여야 한다.)
 	this.stackPass = false;
 	
-	// Grid : grid[{ key: value },{...},{...},]
-	this.grid = [
-		// {a1: 1},					// 이거를 사용하거나
-		// {key: 'a1', value: 1}	// 또는 이거를 사용한다.
-	];
+	// Grid : grid { key: value, key: value, key: value, key: value, key: value }
+	this.grid = {
+		// a1: 1	// 이거를 사용한다.
+	};
 	
 	// grid key list : 1, 2, 5, 6, ... (그리드 키의 배열은 숫자로 저장된다.)
 	this.gridKey = [];
@@ -70,7 +69,6 @@ var GridBoardEngine = function() {
 	// 즉, recycleGridKey 배열에 아무도 없다면 새로운 키를 발급하고, 있다면 맨처음 것을 사용하면 된다.
 	// 여기서 하나 추가. 삭제되는 키 값이 gridKey 상에서 가장 큰 값이라면 recycleGridKey로 보낼 필요없다.
 	
-	
 	//// 셀 합병 및 분할을 관여하는 함수들
 	
 	// 셀 합병 실행
@@ -79,7 +77,7 @@ var GridBoardEngine = function() {
 		var keyName = this.mergedItemValue(mergeItemVal);
 		
 		this.setItem(item.ax, item.ay, keyName);
-		this.drawRect(item.ax, item.ay, item.bx, item.by);	// 합병 후 공통된 값을 지정하게 됨
+		this.drawRect(item.ax, item.ay, item.bx, item.by);	// 합병 후 해당 셀들은 키 값이라는 공통된 값을 저장
 	};
 	
 	// 셀 합병에 있어서 A와 B, 그리고 그 이상의 아이템을 어떻게 합병할 것인지 옵션에 따라 값을 계산한 후 반환한다.
@@ -157,9 +155,14 @@ var GridBoardEngine = function() {
 		}	// 등록이 해제됨으로써 해당 키는 recycleGridKey로 이동한다.
 	};
 	
+	// 등록한 키의 갯수를 반환한다.
+	this.gridKeySize = function() {
+		return this.gridKey.length;
+	};
+	
 	// 그리드 키 배열이 비었는지 확인. (그리드가 비었어요? 네! 비었어요 true, 아니요 안비었는데요? false)
 	this.gridKeyIsEmpty = function() {
-		return this.grid.length == 0;
+		return this.gridKeySize() == 0;
 	};
 	
 	// recycleGridKey 배열이 비었는지 확인
